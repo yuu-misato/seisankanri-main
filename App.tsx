@@ -7,6 +7,7 @@ import { Dashboard } from './components/Dashboard';
 import { FilterControls } from './components/FilterControls';
 import { JobList } from './components/JobList';
 import { GanttChart } from './components/GanttChart';
+import { KanbanBoard } from './components/KanbanBoard'; // Import KanbanBoard
 import { JobDetailModal } from './components/JobDetailModal';
 import { SettingsModal } from './components/SettingsModal';
 import ReportPage from './components/ReportPage';
@@ -73,6 +74,7 @@ const App: React.FC = () => {
 
     // UI state
     const [currentPage, setCurrentPage] = useState<'management' | 'report' | 'correspondence'>('management');
+    const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'gantt'>('kanban');
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -413,9 +415,39 @@ const App: React.FC = () => {
                 {currentPage === 'management' && (
                     <div className="space-y-6">
                         <Dashboard jobs={jobs} />
-                        <FilterControls filters={filters} onFilterChange={setFilters} onReset={handleResetFilters} clients={clients} />
-                        <GanttChart jobs={filteredJobs} onSelectJob={handleSelectJob} />
-                        <JobList jobs={filteredJobs} platingTypes={platingTypes} clients={clients} onSelectJob={handleSelectJob} users={users} />
+                        <div className="flex justify-between items-center mb-4">
+                            <FilterControls filters={filters} onFilterChange={setFilters} onReset={handleResetFilters} clients={clients} />
+                            <div className="bg-white p-1 rounded-lg border border-slate-200 flex items-center shadow-sm">
+                                <button
+                                    onClick={() => setViewMode('kanban')}
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'kanban' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    カンバン
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    リスト
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('gantt')}
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'gantt' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    工程表
+                                </button>
+                            </div>
+                        </div>
+
+                        {viewMode === 'kanban' && (
+                            <KanbanBoard jobs={filteredJobs} platingTypes={platingTypes} clients={clients} onSelectJob={handleSelectJob} users={users} />
+                        )}
+                        {viewMode === 'list' && (
+                            <JobList jobs={filteredJobs} platingTypes={platingTypes} clients={clients} onSelectJob={handleSelectJob} users={users} />
+                        )}
+                        {viewMode === 'gantt' && (
+                            <GanttChart jobs={filteredJobs} onSelectJob={handleSelectJob} />
+                        )}
                     </div>
                 )}
                 {currentPage === 'correspondence' && (
