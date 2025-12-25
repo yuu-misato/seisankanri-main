@@ -74,10 +74,14 @@ const App: React.FC = () => {
 
     // UI state
     const [currentPage, setCurrentPage] = useState<'management' | 'report' | 'correspondence'>('management');
-    const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'gantt'>('kanban');
+    const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'gantt'>('gantt');
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+    // Pagination State
+    const [itemsPerPage, setItemsPerPage] = useState<number>(20);
+    const [paginationPage, setPaginationPage] = useState<number>(1);
 
     const [isNewJob, setIsNewJob] = useState(false);
 
@@ -88,6 +92,11 @@ const App: React.FC = () => {
         deliveryDateStart: '',
         deliveryDateEnd: '',
     });
+
+    // Reset pagination when filters or view changes
+    useEffect(() => {
+        setPaginationPage(1);
+    }, [filters, viewMode, itemsPerPage]);
 
     // --- Supabase Initialization & Sync ---
     useEffect(() => {
@@ -222,6 +231,13 @@ const App: React.FC = () => {
             return statusMatch && clientMatch && productMatch && deliveryStartMatch && deliveryEndMatch;
         });
     }, [jobs, filters]);
+
+    const paginatedJobs = useMemo(() => {
+        const start = (paginationPage - 1) * itemsPerPage;
+        return filteredJobs.slice(start, start + itemsPerPage);
+    }, [filteredJobs, paginationPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
 
     const handleSelectJob = (job: Job) => {
         setSelectedJob(job);
@@ -419,38 +435,78 @@ const App: React.FC = () => {
                         <div className="print:hidden">
                             <Dashboard jobs={jobs} />
                         </div>
-                        <div className="flex justify-between items-center mb-4 print:hidden">
-                            <FilterControls filters={filters} onFilterChange={setFilters} onReset={handleResetFilters} clients={clients} />
-                            <div className="bg-white p-1 rounded-lg border border-slate-200 flex items-center shadow-sm">
-                                <button
-                                    onClick={() => setViewMode('kanban')}
-                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'kanban' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                                >
-                                    カンバン
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                                >
-                                    リスト
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('gantt')}
-                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'gantt' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                                >
-                                    工程表
-                                </button>
+                        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-4 print:hidden">
+                            <div className="flex-1 w-full">
+                                <FilterControls filters={filters} onFilterChange={setFilters} onReset={handleResetFilters} clients={clients} />
+                            </div>
+
+                            <div className="flex items-center gap-4 self-end xl:self-auto">
+                                {/* Pagination Controls */}
+                                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                                    <select
+                                        value={itemsPerPage}
+                                        onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                                        className="text-sm border-none bg-transparent focus:ring-0 cursor-pointer text-slate-600 font-medium"
+                                        title="表示件数"
+                                    >
+                                        <option value={20}>20件</option>
+                                        <option value={50}>50件</option>
+                                        <option value={100}>100件</option>
+                                    </select>
+                                    <div className="h-4 w-px bg-slate-200 mx-1"></div>
+                                    <div className="flex items-center gap-1 text-sm">
+                                        <button
+                                            onClick={() => setPaginationPage(p => Math.max(1, p - 1))}
+                                            disabled={paginationPage === 1}
+                                            className="px-2 text-slate-500 hover:text-cyan-600 disabled:opacity-30 disabled:hover:text-slate-500"
+                                        >
+                                            &lt;
+                                        </button>
+                                        <span className="text-slate-600 min-w-[3rem] text-center text-xs">
+                                            {paginationPage} / {totalPages || 1}
+                                        </span>
+                                        <button
+                                            onClick={() => setPaginationPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={paginationPage >= totalPages}
+                                            className="px-2 text-slate-500 hover:text-cyan-600 disabled:opacity-30 disabled:hover:text-slate-500"
+                                        >
+                                            &gt;
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* View Mode Switcher */}
+                                <div className="bg-white p-1 rounded-lg border border-slate-200 flex items-center shadow-sm">
+                                    <button
+                                        onClick={() => setViewMode('gantt')}
+                                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'gantt' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                        工程表
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('kanban')}
+                                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'kanban' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                        カンバン
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                        リスト
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         {viewMode === 'kanban' && (
-                            <KanbanBoard jobs={filteredJobs} platingTypes={platingTypes} clients={clients} onSelectJob={handleSelectJob} users={users} />
+                            <KanbanBoard jobs={paginatedJobs} platingTypes={platingTypes} clients={clients} onSelectJob={handleSelectJob} users={users} />
                         )}
                         {viewMode === 'list' && (
-                            <JobList jobs={filteredJobs} platingTypes={platingTypes} clients={clients} onSelectJob={handleSelectJob} users={users} />
+                            <JobList jobs={paginatedJobs} platingTypes={platingTypes} clients={clients} onSelectJob={handleSelectJob} users={users} />
                         )}
                         {viewMode === 'gantt' && (
-                            <GanttChart jobs={filteredJobs} onSelectJob={handleSelectJob} />
+                            <GanttChart jobs={paginatedJobs} onSelectJob={handleSelectJob} />
                         )}
                     </div>
                 )}
@@ -523,10 +579,6 @@ const App: React.FC = () => {
                         }}
                         onJobsSave={wrapSetter('jobs', setJobs)}
                         onCorrespondenceLogsSave={wrapSetter('correspondenceLogs', setCorrespondenceLogs)}
-
-                        onOpenCloudConfig={() => { }}
-                        isCloudConnected={isCloudMode}
-                        onUploadToCloud={handleUploadLocalData}
 
                     />
                 )

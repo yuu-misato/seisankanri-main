@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Job } from '../types';
 import { STATUS_COLORS } from '../constants';
+import { PrinterIcon } from './icons';
 
 interface GanttChartProps {
   jobs: Job[];
@@ -32,10 +33,14 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobs, onSelectJob }) => 
   const handleSetMonth = (offset: number) => {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
   };
-  
+
   const handleThisMonth = () => {
     setCurrentDate(new Date());
   }
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   const daysInMonth = getDaysInMonth(year, month);
   const dateHeaders = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -55,39 +60,50 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobs, onSelectJob }) => 
   const today = new Date();
   const showTodayMarker = today.getFullYear() === year && today.getMonth() === month;
   const todayPosition = showTodayMarker ? today.getDate() : -1;
-  
+
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-4 overflow-hidden shadow-sm">
-      <div className="flex items-center justify-center gap-4 mb-4">
-        <button onClick={() => handleSetMonth(-1)} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200">&lt; 前月</button>
-        <button onClick={handleThisMonth} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200">今月</button>
-        <h3 className="text-xl font-semibold w-32 text-center">{year}年 {month + 1}月</h3>
-        <button onClick={() => handleSetMonth(1)} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200">次月 &gt;</button>
+    <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+      <div className="flex items-center justify-between p-4 border-b border-slate-200">
+        <div className="flex items-center gap-4">
+          <h3 className="text-xl font-bold text-slate-800">{year}年 {month + 1}月 工程表</h3>
+          <div className="flex gap-2 print:hidden">
+            <button onClick={() => handleSetMonth(-1)} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200">&lt; 前月</button>
+            <button onClick={handleThisMonth} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200">今月</button>
+            <button onClick={() => handleSetMonth(1)} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200">次月 &gt;</button>
+          </div>
+        </div>
+        <button
+          onClick={handlePrint}
+          className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors text-sm font-medium print:hidden"
+        >
+          <PrinterIcon className="h-4 w-4" />
+          <span>工程表を印刷</span>
+        </button>
       </div>
-      <div className="overflow-x-auto">
+      <div className="p-4 overflow-x-auto print:overflow-visible">
         <div className="grid gap-0 relative" style={{ gridTemplateColumns: `150px repeat(${daysInMonth}, minmax(40px, 1fr))`, gridTemplateRows: `auto repeat(${visibleJobs.length}, 40px)` }}>
           {/* Header Row */}
           <div className="font-semibold text-sm border-r border-b border-slate-200 p-2 sticky left-0 bg-white z-10">商品名</div>
           {dateHeaders.map(day => {
-              const d = new Date(year, month, day);
-              const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-              return (
-                <div key={day} className={`text-center text-xs border-b border-r border-slate-200 p-2 ${isWeekend ? 'bg-slate-100 text-slate-500' : ''} ${day === todayPosition ? 'bg-cyan-100' : ''}`}>
-                    {day}
-                </div>
-              )
+            const d = new Date(year, month, day);
+            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+            return (
+              <div key={day} className={`text-center text-xs border-b border-r border-slate-200 p-2 ${isWeekend ? 'bg-slate-100 text-slate-500' : ''} ${day === todayPosition ? 'bg-cyan-100' : ''}`}>
+                {day}
+              </div>
+            )
           })}
-          
+
           {/* Job Rows & Bars */}
           {visibleJobs.map((job, index) => {
             const jobStart = parseLocalDate(job.startDate);
             const jobEnd = parseLocalDate(job.deliveryDate);
-            
+
             const startDayInMonth = jobStart <= monthStart ? 1 : jobStart.getDate();
             const endDayInMonth = jobEnd >= monthEnd ? daysInMonth : jobEnd.getDate();
-            
+
             const duration = endDayInMonth - startDayInMonth + 1;
-            
+
             if (duration <= 0) return null;
 
             const gridColumnStart = startDayInMonth + 1; // +1 to account for job name column
@@ -95,18 +111,18 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobs, onSelectJob }) => 
             return (
               <React.Fragment key={job.id}>
                 {/* Job Name Cell */}
-                <div style={{gridRow: index + 2}} className="text-xs truncate border-r border-b border-slate-200 p-2 sticky left-0 bg-white z-10 flex items-center" title={job.productName}>{job.productName}</div>
-                
+                <div style={{ gridRow: index + 2 }} className="text-xs truncate border-r border-b border-slate-200 p-2 sticky left-0 bg-white z-10 flex items-center" title={job.productName}>{job.productName}</div>
+
                 {/* Background Grid Cells */}
                 {dateHeaders.map(day => {
-                    const d = new Date(year, month, day);
-                    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                    return <div key={`${job.id}-${day}`} style={{gridRow: index + 2, gridColumn: day + 1}} className={`border-b border-r border-slate-200 ${isWeekend ? 'bg-slate-100/50' : ''}`}></div>
+                  const d = new Date(year, month, day);
+                  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                  return <div key={`${job.id}-${day}`} style={{ gridRow: index + 2, gridColumn: day + 1 }} className={`border-b border-r border-slate-200 ${isWeekend ? 'bg-slate-100/50' : ''}`}></div>
                 })}
 
                 {/* Job Bar */}
                 <div
-                  style={{ 
+                  style={{
                     gridRow: index + 2,
                     gridColumn: `${gridColumnStart} / span ${duration}`,
                     zIndex: 5,
@@ -124,9 +140,9 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobs, onSelectJob }) => 
               </React.Fragment>
             )
           })}
-          
-           {showTodayMarker && (
-            <div 
+
+          {showTodayMarker && (
+            <div
               className="w-0.5 bg-cyan-400 z-20 pointer-events-none"
               style={{
                 gridColumn: todayPosition + 1,
@@ -134,10 +150,10 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobs, onSelectJob }) => 
                 justifySelf: 'center'
               }}
             ></div>
-           )}
+          )}
         </div>
       </div>
-       {visibleJobs.length === 0 && <p className="text-center text-slate-500 mt-4">この月に該当する案件はありません。</p>}
+      {visibleJobs.length === 0 && <p className="text-center text-slate-500 mt-4">この月に該当する案件はありません。</p>}
     </div>
   );
 };
