@@ -524,6 +524,10 @@ const App: React.FC = () => {
                         onJobsSave={wrapSetter('jobs', setJobs)}
                         onCorrespondenceLogsSave={wrapSetter('correspondenceLogs', setCorrespondenceLogs)}
 
+                        onOpenCloudConfig={() => { }}
+                        isCloudConnected={isCloudMode}
+                        onUploadToCloud={handleUploadLocalData}
+
                     />
                 )
             }

@@ -28,6 +28,7 @@ interface SettingsModalProps {
     // Cloud Props
     onOpenCloudConfig: () => void;
     isCloudConnected: boolean;
+    onUploadToCloud?: () => void;
 }
 
 type Tab = 'plating' | 'jigs' | 'clients' | 'process' | 'report' | 'users' | 'data';
@@ -107,7 +108,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     isOpen, onClose, currentUser,
     users, platingTypes, jigs, clients, processDurations, settlementMonth, jobs, correspondenceLogs,
     onUsersSave, onPlatingTypesSave, onJigsSave, onClientsSave, onProcessDurationsSave, onSettlementMonthSave, onJobsSave, onCorrespondenceLogsSave,
-    onOpenCloudConfig, isCloudConnected
+    onOpenCloudConfig, isCloudConnected, onUploadToCloud
 }) => {
     const [activeTab, setActiveTab] = useState<Tab>('plating');
     const [localUsers, setLocalUsers] = useState<User[]>([]);
@@ -379,6 +380,44 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             case 'data':
                 return (
                     <div className="space-y-6">
+                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <div className="flex items-center justify-between mb-4">
+                                <h4 className="font-semibold text-slate-800 flex items-center gap-2">
+                                    <CloudIcon className="h-5 w-5 text-cyan-600" />
+                                    クラウド連携 (Supabase)
+                                </h4>
+                                <span className={`px-2 py-1 text-xs rounded-full ${isCloudConnected ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}`}>
+                                    {isCloudConnected ? '接続完了' : '未接続'}
+                                </span>
+                            </div>
+                            {isCloudConnected ? (
+                                <div>
+                                    <p className="text-sm text-slate-600 mb-3">
+                                        クラウドデータベースに接続されています。ローカルのデータをクラウドにアップロードして同期することができます。
+                                    </p>
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm('ローカルのデータをクラウドにアップロードしますか？\n(クラウド上の既存データは更新されます)')) {
+                                                onUploadToCloud?.();
+                                            }
+                                        }}
+                                        className="text-sm bg-cyan-600 text-white px-3 py-2 rounded-md hover:bg-cyan-700 flex items-center gap-2"
+                                    >
+                                        <UploadIcon className="h-4 w-4" />
+                                        ローカルデータをクラウドへアップロード
+                                    </button>
+                                </div>
+                            ) : (
+                                <div>
+                                    <p className="text-sm text-red-500 mb-2">クラウドに接続されていません。</p>
+                                    <p className="text-xs text-slate-500">
+                                        .envファイルの設定を確認してください。<br />
+                                        VITE_SUPABASE_URL と VITE_SUPABASE_ANON_KEY が正しく設定されている必要があります。
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
                         <div>
                             <h4 className="font-semibold text-slate-800 mb-2">データの保存 (エクスポート)</h4>
                             <p className="text-sm text-slate-600 mb-4">
