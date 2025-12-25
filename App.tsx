@@ -12,7 +12,7 @@ import { SettingsModal } from './components/SettingsModal';
 import ReportPage from './components/ReportPage';
 import { LoginPage } from './components/LoginPage';
 import CorrespondencePage from './components/CorrespondencePage';
-import { CloudConfigModal } from './components/CloudConfigModal';
+
 import { createSupabaseClient } from './supabaseClient';
 
 /**
@@ -52,8 +52,11 @@ const App: React.FC = () => {
     // Auth state
     const [currentUser, setCurrentUser] = usePersistentState<User | null>(`${STORAGE_PREFIX}currentUser`, null);
 
-    // Cloud Config State
-    const [supabaseConfig, setSupabaseConfig] = usePersistentState<SupabaseConfig | null>(`${STORAGE_PREFIX}supabaseConfig`, null);
+    // Cloud Config State - Hardcoded from env
+    const supabaseConfig: SupabaseConfig = {
+        url: import.meta.env.VITE_SUPABASE_URL || '',
+        anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+    };
     const [isCloudMode, setIsCloudMode] = useState(false);
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
@@ -73,7 +76,7 @@ const App: React.FC = () => {
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-    const [isCloudConfigModalOpen, setIsCloudConfigModalOpen] = useState(false);
+
     const [isNewJob, setIsNewJob] = useState(false);
 
     const [filters, setFilters] = useState<Filters>({
@@ -86,7 +89,7 @@ const App: React.FC = () => {
 
     // --- Supabase Initialization & Sync ---
     useEffect(() => {
-        if (supabaseConfig) {
+        if (supabaseConfig.url && supabaseConfig.anonKey) {
             try {
                 const client = createSupabaseClient(supabaseConfig.url, supabaseConfig.anonKey);
                 setSupabase(client);
@@ -170,11 +173,8 @@ const App: React.FC = () => {
                 console.error("Supabase connection error:", e);
                 setIsCloudMode(false);
             }
-        } else {
-            setIsCloudMode(false);
-            setSupabase(null);
         }
-    }, [supabaseConfig]);
+    }, []);
 
     // --- Data Upload Utility ---
     const handleUploadLocalData = async () => {
@@ -201,7 +201,7 @@ const App: React.FC = () => {
 
             await Promise.all(batchPromises);
             alert('データのアップロードが完了しました。');
-            setIsCloudConfigModalOpen(false);
+
         } catch (e) {
             console.error(e);
             alert('アップロード中にエラーが発生しました。');
@@ -486,19 +486,8 @@ const App: React.FC = () => {
                     onCorrespondenceLogsSave={wrapSetter('correspondenceLogs', setCorrespondenceLogs)}
 
                     // Cloud Config
-                    onOpenCloudConfig={() => setIsCloudConfigModalOpen(true)}
+                    onOpenCloudConfig={() => { }}
                     isCloudConnected={isCloudMode}
-                />
-            )}
-
-            {isCloudConfigModalOpen && (
-                <CloudConfigModal
-                    isOpen={isCloudConfigModalOpen}
-                    onClose={() => setIsCloudConfigModalOpen(false)}
-                    config={supabaseConfig}
-                    onSave={(cfg) => { setSupabaseConfig(cfg); setIsCloudConfigModalOpen(false); }}
-                    onDisconnect={() => { setSupabaseConfig(null); setIsCloudConfigModalOpen(false); }}
-                    onUploadLocalData={handleUploadLocalData}
                 />
             )}
         </div>
