@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Job } from '../types';
 import { STATUS_COLORS } from '../constants';
 import { PrinterIcon } from './icons';
@@ -26,6 +26,7 @@ const parseLocalDate = (dateString: string): Date => {
 
 export const GanttChart: React.FC<GanttChartProps> = ({ jobs, onSelectJob }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -61,6 +62,36 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobs, onSelectJob }) => 
   const showTodayMarker = today.getFullYear() === year && today.getMonth() === month;
   const todayPosition = showTodayMarker ? today.getDate() : -1;
 
+  // Auto-scroll to today
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const now = new Date();
+      if (now.getFullYear() === year && now.getMonth() === month) {
+        // We want today to be roughly the 3rd visible column.
+        // Day 1 is at index 0 of days. Visual position depends on scroll and sticky header.
+        // Sticky header covers the first 150px.
+        // Day N starts at 150 + (N-1)*40.
+        // To make Day T-2 start at visual 150:
+        // ScrollLeft = (150 + (T-3)*40) - 150 = (T-3)*40.
+
+        const dayWidth = 40;
+        const targetDay = now.getDate();
+        const scrollPos = Math.max(0, (targetDay - 3) * dayWidth);
+
+        // Use setTimeout to ensure layout is stable (sometimes helps with initial render)
+        setTimeout(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollLeft = scrollPos;
+          }
+        }, 0);
+      } else {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollLeft = 0;
+        }
+      }
+    }
+  }, [year, month]);
+
   return (
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
@@ -80,7 +111,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobs, onSelectJob }) => 
           <span>工程表を印刷</span>
         </button>
       </div>
-      <div className="p-4 overflow-x-auto print:overflow-visible">
+      <div ref={scrollContainerRef} className="p-4 overflow-x-auto print:overflow-visible">
         <div className="grid gap-0 relative" style={{ gridTemplateColumns: `150px repeat(${daysInMonth}, minmax(40px, 1fr))`, gridTemplateRows: `auto repeat(${visibleJobs.length}, 40px)` }}>
           {/* Header Row */}
           <div className="font-semibold text-sm border-r border-b border-slate-200 p-2 sticky left-0 bg-white z-10">商品名</div>
