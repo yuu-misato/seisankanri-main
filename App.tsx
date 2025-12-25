@@ -402,20 +402,24 @@ const App: React.FC = () => {
 
     return (
         <div className="bg-slate-50 min-h-screen">
-            <Header
-                currentUser={currentUser}
-                onLogout={handleLogout}
-                onNewJob={handleNewJob}
-                onOpenSettings={() => setIsSettingsModalOpen(true)}
-                currentPage={currentPage}
-                onNavigate={setCurrentPage}
-                isCloudConnected={isCloudMode}
-            />
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="print:hidden">
+                <Header
+                    currentUser={currentUser}
+                    onLogout={handleLogout}
+                    onNewJob={handleNewJob}
+                    onOpenSettings={() => setIsSettingsModalOpen(true)}
+                    currentPage={currentPage}
+                    onNavigate={setCurrentPage}
+                    isCloudConnected={isCloudMode}
+                />
+            </div>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 print:max-w-full print:p-0 print:m-0">
                 {currentPage === 'management' && (
                     <div className="space-y-6">
-                        <Dashboard jobs={jobs} />
-                        <div className="flex justify-between items-center mb-4">
+                        <div className="print:hidden">
+                            <Dashboard jobs={jobs} />
+                        </div>
+                        <div className="flex justify-between items-center mb-4 print:hidden">
                             <FilterControls filters={filters} onFilterChange={setFilters} onReset={handleResetFilters} clients={clients} />
                             <div className="bg-white p-1 rounded-lg border border-slate-200 flex items-center shadow-sm">
                                 <button
@@ -466,61 +470,65 @@ const App: React.FC = () => {
                 )}
             </main>
 
-            {isDetailModalOpen && selectedJob && (
-                <JobDetailModal
-                    isOpen={isDetailModalOpen}
-                    onClose={handleCloseModal}
-                    onSave={handleSaveJob}
-                    onDelete={handleDeleteJob}
-                    onDuplicate={handleDuplicateJob}
-                    job={selectedJob}
-                    allJobs={jobs}
-                    isNew={isNewJob}
-                    clients={clients}
-                    platingTypes={platingTypes}
-                    jigs={jigs}
-                    processDurations={processDurations}
-                    correspondenceLogs={correspondenceLogs}
-                    users={users}
-                    onDeleteCorrespondenceLog={handleDeleteCorrespondenceLog}
-                />
-            )}
+            {
+                isDetailModalOpen && selectedJob && (
+                    <JobDetailModal
+                        isOpen={isDetailModalOpen}
+                        onClose={handleCloseModal}
+                        onSave={handleSaveJob}
+                        onDelete={handleDeleteJob}
+                        onDuplicate={handleDuplicateJob}
+                        job={selectedJob}
+                        allJobs={jobs}
+                        isNew={isNewJob}
+                        clients={clients}
+                        platingTypes={platingTypes}
+                        jigs={jigs}
+                        processDurations={processDurations}
+                        correspondenceLogs={correspondenceLogs}
+                        users={users}
+                        onDeleteCorrespondenceLog={handleDeleteCorrespondenceLog}
+                    />
+                )
+            }
 
-            {isSettingsModalOpen && (
-                <SettingsModal
-                    isOpen={isSettingsModalOpen}
-                    onClose={() => setIsSettingsModalOpen(false)}
-                    currentUser={currentUser}
-                    users={users}
-                    platingTypes={platingTypes}
-                    jigs={jigs}
-                    clients={clients}
-                    processDurations={processDurations}
-                    settlementMonth={settlementMonth}
-                    jobs={jobs}
-                    correspondenceLogs={correspondenceLogs}
+            {
+                isSettingsModalOpen && (
+                    <SettingsModal
+                        isOpen={isSettingsModalOpen}
+                        onClose={() => setIsSettingsModalOpen(false)}
+                        currentUser={currentUser}
+                        users={users}
+                        platingTypes={platingTypes}
+                        jigs={jigs}
+                        clients={clients}
+                        processDurations={processDurations}
+                        settlementMonth={settlementMonth}
+                        jobs={jobs}
+                        correspondenceLogs={correspondenceLogs}
 
-                    // Wrapped setters for cloud sync
-                    onUsersSave={wrapSetter('users', setUsers)}
-                    onPlatingTypesSave={wrapSetter('platingTypes', setPlatingTypes)}
-                    onJigsSave={wrapSetter('jigs', setJigs)}
-                    onClientsSave={wrapSetter('clients', setClients)}
+                        // Wrapped setters for cloud sync
+                        onUsersSave={wrapSetter('users', setUsers)}
+                        onPlatingTypesSave={wrapSetter('platingTypes', setPlatingTypes)}
+                        onJigsSave={wrapSetter('jigs', setJigs)}
+                        onClientsSave={wrapSetter('clients', setClients)}
 
-                    onProcessDurationsSave={(data) => {
-                        setProcessDurations(data);
-                        if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'processDurations', value: data });
-                    }}
-                    onSettlementMonthSave={(month) => {
-                        setSettlementMonth(month);
-                        if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'general', value: { settlementMonth: month } });
-                    }}
-                    onJobsSave={wrapSetter('jobs', setJobs)}
-                    onCorrespondenceLogsSave={wrapSetter('correspondenceLogs', setCorrespondenceLogs)}
+                        onProcessDurationsSave={(data) => {
+                            setProcessDurations(data);
+                            if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'processDurations', value: data });
+                        }}
+                        onSettlementMonthSave={(month) => {
+                            setSettlementMonth(month);
+                            if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'general', value: { settlementMonth: month } });
+                        }}
+                        onJobsSave={wrapSetter('jobs', setJobs)}
+                        onCorrespondenceLogsSave={wrapSetter('correspondenceLogs', setCorrespondenceLogs)}
 
-                />
-            )}
+                    />
+                )
+            }
 
-        </div>
+        </div >
     );
 };
 
