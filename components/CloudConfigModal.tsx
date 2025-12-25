@@ -1,18 +1,19 @@
+
 import React, { useState, useRef } from 'react';
-import { FirebaseConfig } from '../types';
+import { SupabaseConfig } from '../types';
 import { CloseIcon, CloudIcon, UploadIcon, DownloadIcon } from './icons';
 
 interface CloudConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
-  config: FirebaseConfig | null;
-  onSave: (config: FirebaseConfig) => void;
+  config: SupabaseConfig | null;
+  onSave: (config: SupabaseConfig) => void;
   onDisconnect: () => void;
   onUploadLocalData: () => void;
 }
 
 export const CloudConfigModal: React.FC<CloudConfigModalProps> = ({ isOpen, onClose, config, onSave, onDisconnect, onUploadLocalData }) => {
-  const [formData, setFormData] = useState<FirebaseConfig>(config || { apiKey: '', authDomain: '', projectId: '' });
+  const [formData, setFormData] = useState<SupabaseConfig>(config || { url: '', anonKey: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,7 +21,7 @@ export const CloudConfigModal: React.FC<CloudConfigModalProps> = ({ isOpen, onCl
   };
 
   const handleSave = () => {
-    if (!formData.apiKey || !formData.authDomain || !formData.projectId) {
+    if (!formData.url || !formData.anonKey) {
       alert('すべての項目を入力してください。');
       return;
     }
@@ -33,7 +34,7 @@ export const CloudConfigModal: React.FC<CloudConfigModalProps> = ({ isOpen, onCl
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `firebase_config.json`;
+    a.download = 'supabase_config.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -46,24 +47,23 @@ export const CloudConfigModal: React.FC<CloudConfigModalProps> = ({ isOpen, onCl
 
     const reader = new FileReader();
     reader.onload = (event) => {
-        try {
-            const data = JSON.parse(event.target?.result as string);
-            if (data.apiKey && data.authDomain && data.projectId) {
-                setFormData({
-                    apiKey: data.apiKey,
-                    authDomain: data.authDomain,
-                    projectId: data.projectId
-                });
-                alert('設定ファイルを読み込みました。');
-            } else {
-                alert('無効な設定ファイルです。必要な項目 (apiKey, authDomain, projectId) が含まれていません。');
-            }
-        } catch (error) {
-            console.error(error);
-            alert('ファイルの読み込みに失敗しました。');
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (data.url && data.anonKey) {
+          setFormData({
+            url: data.url,
+            anonKey: data.anonKey
+          });
+          alert('設定ファイルを読み込みました。');
+        } else {
+          alert('無効な設定ファイルです。必要な項目 (url, anonKey) が含まれていません。');
         }
-        // Reset input to allow selecting the same file again if needed
-        if (fileInputRef.current) fileInputRef.current.value = '';
+      } catch (error) {
+        console.error(error);
+        alert('ファイルの読み込みに失敗しました。');
+      }
+      // Reset input to allow selecting the same file again if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsText(file);
   };
@@ -89,90 +89,79 @@ export const CloudConfigModal: React.FC<CloudConfigModalProps> = ({ isOpen, onCl
 
           <div className="flex justify-end gap-3 text-sm border-b border-slate-100 pb-4">
             <button
-                type="button"
-                onClick={handleExportConfig}
-                className="text-cyan-600 hover:text-cyan-800 flex items-center gap-1 px-2 py-1 hover:bg-cyan-50 rounded"
-                title="現在の入力内容をファイルに保存します"
+              type="button"
+              onClick={handleExportConfig}
+              className="text-cyan-600 hover:text-cyan-800 flex items-center gap-1 px-2 py-1 hover:bg-cyan-50 rounded"
+              title="現在の入力内容をファイルに保存します"
             >
-                <DownloadIcon className="w-4 h-4"/> 設定ファイルを出力
+              <DownloadIcon className="w-4 h-4" /> 設定ファイルを出力
             </button>
             <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-cyan-600 hover:text-cyan-800 flex items-center gap-1 px-2 py-1 hover:bg-cyan-50 rounded"
-                title="保存した設定ファイルを読み込みます"
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-cyan-600 hover:text-cyan-800 flex items-center gap-1 px-2 py-1 hover:bg-cyan-50 rounded"
+              title="保存した設定ファイルを読み込みます"
             >
-                <UploadIcon className="w-4 h-4"/> 設定ファイルを読込
+              <UploadIcon className="w-4 h-4" /> 設定ファイルを読込
             </button>
             <input
-                type="file"
-                accept=".json"
-                ref={fileInputRef}
-                onChange={handleImportConfig}
-                className="hidden"
+              type="file"
+              accept=".json"
+              ref={fileInputRef}
+              onChange={handleImportConfig}
+              className="hidden"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">API Key (apiKey)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Supabase URL (url)</label>
             <input
               type="text"
-              name="apiKey"
-              value={formData.apiKey}
+              name="url"
+              value={formData.url}
               onChange={handleChange}
               className="w-full border border-slate-300 rounded-md p-2 text-sm"
-              placeholder="Example: AIzaSy..."
+              placeholder="Example: https://xyz.supabase.co"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Auth Domain (authDomain)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Anon Key (anonKey)</label>
             <input
               type="text"
-              name="authDomain"
-              value={formData.authDomain}
+              name="anonKey"
+              value={formData.anonKey}
               onChange={handleChange}
               className="w-full border border-slate-300 rounded-md p-2 text-sm"
-              placeholder="Example: project-id.firebaseapp.com"
+              placeholder="Example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Project ID (projectId)</label>
-            <input
-              type="text"
-              name="projectId"
-              value={formData.projectId}
-              onChange={handleChange}
-              className="w-full border border-slate-300 rounded-md p-2 text-sm"
-              placeholder="Example: project-id"
-            />
-          </div>
-          
-           {config && (
-                <div className="mt-6 pt-6 border-t border-slate-200">
-                    <h4 className="font-semibold text-slate-800 mb-2">データ移行</h4>
-                     <button 
-                        onClick={() => {
-                            if(window.confirm('現在のローカルデータをクラウドにアップロードし、クラウド上のデータを上書きしますか？')) {
-                                onUploadLocalData();
-                            }
-                        }}
-                        className="w-full flex justify-center items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 border border-slate-300 rounded-md hover:bg-slate-200 transition-colors"
-                    >
-                        <UploadIcon />
-                        現在のローカルデータをクラウドにアップロード
-                    </button>
-                </div>
-            )}
+
+          {config && (
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <h4 className="font-semibold text-slate-800 mb-2">データ移行</h4>
+              <button
+                onClick={() => {
+                  if (window.confirm('現在のローカルデータをクラウドにアップロードし、クラウド上のデータを上書きしますか？')) {
+                    onUploadLocalData();
+                  }
+                }}
+                className="w-full flex justify-center items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 border border-slate-300 rounded-md hover:bg-slate-200 transition-colors"
+              >
+                <UploadIcon />
+                現在のローカルデータをクラウドにアップロード
+              </button>
+            </div>
+          )}
         </div>
 
         <footer className="flex justify-between items-center p-4 border-t border-slate-200 bg-slate-50 rounded-b-lg mt-auto">
-           {config ? (
-               <button onClick={() => { if(window.confirm('接続を解除しますか？')) onDisconnect(); }} className="text-red-600 hover:text-red-800 text-sm">接続を解除</button>
-           ) : <div></div>}
-           <div className="flex gap-2">
-               <button onClick={onClose} className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-md hover:bg-slate-50">キャンセル</button>
-               <button onClick={handleSave} className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700">保存して接続</button>
-           </div>
+          {config ? (
+            <button onClick={() => { if (window.confirm('接続を解除しますか？')) onDisconnect(); }} className="text-red-600 hover:text-red-800 text-sm">接続を解除</button>
+          ) : <div></div>}
+          <div className="flex gap-2">
+            <button onClick={onClose} className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-md hover:bg-slate-50">キャンセル</button>
+            <button onClick={handleSave} className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700">保存して接続</button>
+          </div>
         </footer>
       </div>
     </div>

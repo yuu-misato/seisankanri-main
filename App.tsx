@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { Job, ClientMaster, PlatingTypeMaster, JigMaster, Filters, ProcessStatus, ProcessStageDurations, User, CorrespondenceLog, FirebaseConfig } from './types';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Job, ClientMaster, PlatingTypeMaster, JigMaster, Filters, ProcessStatus, ProcessStageDurations, User, CorrespondenceLog, SupabaseConfig } from './types';
 import { MOCK_JOBS, MOCK_CLIENTS, MOCK_PLATING_TYPES, MOCK_JIGS, DEFAULT_PROCESS_DURATIONS, PROCESS_STATUS_ORDER, MOCK_USERS, MOCK_CORRESPONDENCE_LOGS } from './constants';
 import Header from './components/Header';
 import { Dashboard } from './components/Dashboard';
@@ -14,6 +13,7 @@ import ReportPage from './components/ReportPage';
 import { LoginPage } from './components/LoginPage';
 import CorrespondencePage from './components/CorrespondencePage';
 import { CloudConfigModal } from './components/CloudConfigModal';
+import { createSupabaseClient } from './supabaseClient';
 
 /**
  * A custom hook that persists state to localStorage.
@@ -21,41 +21,41 @@ import { CloudConfigModal } from './components/CloudConfigModal';
  * to localStorage on every change and loads it on initialization.
  */
 function usePersistentState<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const [state, setState] = useState<T>(() => {
-    try {
-      const storedValue = window.localStorage.getItem(key);
-      if (storedValue) {
-        return JSON.parse(storedValue);
-      }
-    } catch (error) {
-      console.error(`Error reading localStorage key "${key}":`, error);
-    }
-    // If no stored value, return the initial value
-    return initialValue;
-  });
+    const [state, setState] = useState<T>(() => {
+        try {
+            const storedValue = window.localStorage.getItem(key);
+            if (storedValue) {
+                return JSON.parse(storedValue);
+            }
+        } catch (error) {
+            console.error(`Error reading localStorage key "${key}":`, error);
+        }
+        // If no stored value, return the initial value
+        return initialValue;
+    });
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(key, JSON.stringify(state));
-    } catch (error) {
-      console.error(`Error setting localStorage key "${key}":`, error);
-    }
-  }, [key, state]);
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(key, JSON.stringify(state));
+        } catch (error) {
+            console.error(`Error setting localStorage key "${key}":`, error);
+        }
+    }, [key, state]);
 
-  return [state, setState];
+    return [state, setState];
 }
 
 
 const App: React.FC = () => {
     const STORAGE_PREFIX = 'imai-plating-prod-mgnt:';
-    
+
     // Auth state
     const [currentUser, setCurrentUser] = usePersistentState<User | null>(`${STORAGE_PREFIX}currentUser`, null);
-    
+
     // Cloud Config State
-    const [firebaseConfig, setFirebaseConfig] = usePersistentState<FirebaseConfig | null>(`${STORAGE_PREFIX}firebaseConfig`, null);
+    const [supabaseConfig, setSupabaseConfig] = usePersistentState<SupabaseConfig | null>(`${STORAGE_PREFIX}supabaseConfig`, null);
     const [isCloudMode, setIsCloudMode] = useState(false);
-    const [db, setDb] = useState<any>(null); // Firestore instance
+    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
     // Master data state, now persistent
     const [jobs, setJobs] = usePersistentState<Job[]>(`${STORAGE_PREFIX}jobs`, MOCK_JOBS);
@@ -84,85 +84,121 @@ const App: React.FC = () => {
         deliveryDateEnd: '',
     });
 
-    // --- Firebase Initialization & Sync ---
+    // --- Supabase Initialization & Sync ---
     useEffect(() => {
-        if (firebaseConfig) {
+        if (supabaseConfig) {
             try {
-                const app = initializeApp(firebaseConfig);
-                const firestore = getFirestore(app);
-                setDb(firestore);
+                const client = createSupabaseClient(supabaseConfig.url, supabaseConfig.anonKey);
+                setSupabase(client);
                 setIsCloudMode(true);
-                
-                // Real-time listeners
-                const unsubJobs = onSnapshot(collection(firestore, 'jobs'), (snap) => {
-                    const data = snap.docs.map(d => d.data() as Job);
-                    setJobs(data);
-                });
-                const unsubClients = onSnapshot(collection(firestore, 'clients'), (snap) => {
-                    setClients(snap.docs.map(d => d.data() as ClientMaster));
-                });
-                const unsubPlating = onSnapshot(collection(firestore, 'platingTypes'), (snap) => {
-                    setPlatingTypes(snap.docs.map(d => d.data() as PlatingTypeMaster));
-                });
-                 const unsubJigs = onSnapshot(collection(firestore, 'jigs'), (snap) => {
-                    setJigs(snap.docs.map(d => d.data() as JigMaster));
-                });
-                 const unsubLogs = onSnapshot(collection(firestore, 'correspondenceLogs'), (snap) => {
-                    setCorrespondenceLogs(snap.docs.map(d => d.data() as CorrespondenceLog));
-                });
-                const unsubUsers = onSnapshot(collection(firestore, 'users'), (snap) => {
-                    setUsers(snap.docs.map(d => d.data() as User));
-                });
-                // Settings collections (stored as documents inside appSettings collection)
-                const unsubSettings = onSnapshot(collection(firestore, 'appSettings'), (snap) => {
-                   snap.docs.forEach(doc => {
-                       if (doc.id === 'processDurations') setProcessDurations(doc.data() as ProcessStageDurations);
-                       if (doc.id === 'general') setSettlementMonth(doc.data().settlementMonth as number);
-                   })
-                });
+
+                // --- Initial Fetch ---
+                // Supabase doesn't have a "snapshot" listener that gives initial data AND updates like Firestore in one go (easily).
+                // We should fetch once, then listen for changes.
+                const fetchData = async () => {
+                    const { data: jobsData } = await client.from('jobs').select('*');
+                    if (jobsData) setJobs(jobsData as any);
+
+                    const { data: clientsData } = await client.from('clients').select('*');
+                    if (clientsData) setClients(clientsData as any);
+
+                    const { data: platingData } = await client.from('platingTypes').select('*');
+                    if (platingData) setPlatingTypes(platingData as any);
+
+                    const { data: jigsData } = await client.from('jigs').select('*');
+                    if (jigsData) setJigs(jigsData as any);
+
+                    const { data: logsData } = await client.from('correspondenceLogs').select('*');
+                    if (logsData) setCorrespondenceLogs(logsData as any);
+
+                    const { data: usersData } = await client.from('users').select('*');
+                    if (usersData) setUsers(usersData as User[]);
+
+                    const { data: settingsData } = await client.from('appSettings').select('*');
+                    if (settingsData) {
+                        settingsData.forEach((row: any) => {
+                            if (row.key === 'processDurations') setProcessDurations(row.value);
+                            if (row.key === 'general') setSettlementMonth(row.value.settlementMonth);
+                        });
+                    }
+                };
+                fetchData();
+
+                // --- Real-time Listeners ---
+                // Helper to handle realtime updates
+                const handleRealtime = (table: string, setter: React.Dispatch<React.SetStateAction<any[]>>, pk = 'id') => {
+                    return client.channel(`public:${table}`)
+                        .on('postgres_changes', { event: '*', schema: 'public', table: table }, (payload: any) => {
+                            if (payload.eventType === 'INSERT') {
+                                setter(prev => [...prev, payload.new]);
+                            } else if (payload.eventType === 'UPDATE') {
+                                setter(prev => prev.map(item => item[pk] === payload.new[pk] ? payload.new : item));
+                            } else if (payload.eventType === 'DELETE') {
+                                setter(prev => prev.filter(item => item[pk] !== payload.old[pk]));
+                            }
+                        })
+                        .subscribe();
+                };
+
+                const subs = [
+                    handleRealtime('jobs', setJobs),
+                    handleRealtime('clients', setClients),
+                    handleRealtime('platingTypes', setPlatingTypes),
+                    handleRealtime('jigs', setJigs),
+                    handleRealtime('correspondenceLogs', setCorrespondenceLogs),
+                    handleRealtime('users', setUsers),
+                ];
+
+                // Settings listener (special case for key-value store structure)
+                const settingsSub = client.channel('public:appSettings')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'appSettings' }, (payload) => {
+                        if (payload.new && payload.new.key === 'processDurations') {
+                            setProcessDurations(payload.new.value);
+                        }
+                        if (payload.new && payload.new.key === 'general') {
+                            setSettlementMonth(payload.new.value.settlementMonth);
+                        }
+                    })
+                    .subscribe();
 
 
                 return () => {
-                    unsubJobs();
-                    unsubClients();
-                    unsubPlating();
-                    unsubJigs();
-                    unsubLogs();
-                    unsubUsers();
-                    unsubSettings();
+                    subs.forEach(sub => client.removeChannel(sub));
+                    client.removeChannel(settingsSub);
                 };
             } catch (e) {
-                console.error("Firebase connection error:", e);
+                console.error("Supabase connection error:", e);
                 setIsCloudMode(false);
             }
         } else {
             setIsCloudMode(false);
-            setDb(null);
+            setSupabase(null);
         }
-    }, [firebaseConfig]);
+    }, [supabaseConfig]);
 
     // --- Data Upload Utility ---
     const handleUploadLocalData = async () => {
-        if (!db) return;
+        if (!supabase) return;
         try {
             const batchPromises = [];
             // Upload Jobs
-            for(const j of jobs) batchPromises.push(setDoc(doc(db, 'jobs', j.id), j));
+            for (const j of jobs) batchPromises.push(supabase.from('jobs').upsert(j));
             // Upload Clients
-            for(const c of clients) batchPromises.push(setDoc(doc(db, 'clients', c.id), c));
+            for (const c of clients) batchPromises.push(supabase.from('clients').upsert(c));
             // Upload Plating Types
-            for(const p of platingTypes) batchPromises.push(setDoc(doc(db, 'platingTypes', p.id), p));
+            for (const p of platingTypes) batchPromises.push(supabase.from('platingTypes').upsert(p));
             // Upload Jigs
-            for(const j of jigs) batchPromises.push(setDoc(doc(db, 'jigs', j.id), j));
-             // Upload Logs
-            for(const l of correspondenceLogs) batchPromises.push(setDoc(doc(db, 'correspondenceLogs', l.id), l));
-             // Upload Users
-            for(const u of users) batchPromises.push(setDoc(doc(db, 'users', u.id), u));
-            
+            for (const j of jigs) batchPromises.push(supabase.from('jigs').upsert(j));
+            // Upload Logs
+            for (const l of correspondenceLogs) batchPromises.push(supabase.from('correspondenceLogs').upsert(l));
+            // Upload Users
+            for (const u of users) batchPromises.push(supabase.from('users').upsert(u));
+
             // Upload Settings
-            batchPromises.push(setDoc(doc(db, 'appSettings', 'processDurations'), processDurations));
-            batchPromises.push(setDoc(doc(db, 'appSettings', 'general'), { settlementMonth }));
-            
+            // Settings are key-value in 'appSettings' table
+            batchPromises.push(supabase.from('appSettings').upsert({ key: 'processDurations', value: processDurations }));
+            batchPromises.push(supabase.from('appSettings').upsert({ key: 'general', value: { settlementMonth } }));
+
             await Promise.all(batchPromises);
             alert('データのアップロードが完了しました。');
             setIsCloudConfigModalOpen(false);
@@ -246,9 +282,9 @@ const App: React.FC = () => {
             createdBy: isNewJob ? currentUser.id : (jobToSave.createdBy || currentUser.id),
             createdAt: isNewJob ? timestamp : (jobToSave.createdAt || timestamp),
         };
-        
-        if (isCloudMode && db) {
-            await setDoc(doc(db, 'jobs', jobWithAudit.id), jobWithAudit);
+
+        if (isCloudMode && supabase) {
+            await supabase.from('jobs').upsert(jobWithAudit);
         } else {
             if (isNewJob) {
                 setJobs(prevJobs => [...prevJobs, jobWithAudit]);
@@ -258,18 +294,18 @@ const App: React.FC = () => {
         }
         handleCloseModal();
     };
-    
+
     const handleDeleteJob = async (jobId: string) => {
         if (window.confirm('この案件を削除しますか？')) {
-            if (isCloudMode && db) {
-                await deleteDoc(doc(db, 'jobs', jobId));
+            if (isCloudMode && supabase) {
+                await supabase.from('jobs').delete().eq('id', jobId);
             } else {
                 setJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
             }
             handleCloseModal();
         }
     };
-    
+
     const handleSaveCorrespondenceLog = async (log: Omit<CorrespondenceLog, 'id' | 'correspondenceDate' | 'staffId'>) => {
         if (!currentUser) return;
         const newLog: CorrespondenceLog = {
@@ -278,57 +314,57 @@ const App: React.FC = () => {
             correspondenceDate: new Date().toISOString(),
             staffId: currentUser.id,
         };
-        
-        if (isCloudMode && db) {
-            await setDoc(doc(db, 'correspondenceLogs', newLog.id), newLog);
+
+        if (isCloudMode && supabase) {
+            await supabase.from('correspondenceLogs').upsert(newLog);
         } else {
             setCorrespondenceLogs(prev => [newLog, ...prev]);
         }
     };
-    
+
     const handleDeleteCorrespondenceLog = async (logId: string) => {
         if (window.confirm('この応対履歴を削除しますか？')) {
-            if (isCloudMode && db) {
-                await deleteDoc(doc(db, 'correspondenceLogs', logId));
+            if (isCloudMode && supabase) {
+                await supabase.from('correspondenceLogs').delete().eq('id', logId);
             } else {
                 setCorrespondenceLogs(prevLogs => prevLogs.filter(log => log.id !== logId));
             }
         }
     };
-    
+
     // Generic handlers for master data updates from SettingsModal
     const handleUpdateMaster = async (collectionName: string, data: any[]) => {
-         if (isCloudMode && db) {
-             // For master data arrays, we need to sync each item.
-             // Strategy: We can either replace the whole collection or upsert items.
-             // Given the UI sends the full array, let's upsert all.
-             // Deletion handling is tricky with just 'upsert', so we might need to rely on the user interface's delete action being separate
-             // BUT, SettingsModal passes the full new state.
-             // For simplicity in this structure: we iterate and set.
-             // Real deletion sync needs more logic, but for now let's save all items.
-             // If an item was deleted locally, it won't be in `data`, so we should really sync deletions too.
-             // A proper way: Since we are in SettingsModal, maybe we should change `onUsersSave` to individual actions.
-             // However, to keep changes minimal to existing structure:
-             const batchPromises = data.map(item => setDoc(doc(db, collectionName, item.id), item));
-             await Promise.all(batchPromises);
-         } else {
-             // Local storage update is handled by the passed setter (e.g. setUsers)
-             // This function is just a proxy if we need to intercept for cloud.
-         }
+        if (isCloudMode && supabase) {
+            // For master data arrays, we need to sync each item.
+            // Strategy: We can either replace the whole collection or upsert items.
+            // Given the UI sends the full array, let's upsert all.
+            // Deletion handling is tricky with just 'upsert', so we might need to rely on the user interface's delete action being separate
+            // BUT, SettingsModal passes the full new state.
+            // For simplicity in this structure: we iterate and set.
+            // Real deletion sync needs more logic, but for now let's save all items.
+            // If an item was deleted locally, it won't be in `data`, so we should really sync deletions too.
+            // A proper way: Since we are in SettingsModal, maybe we should change `onUsersSave` to individual actions.
+            // However, to keep changes minimal to existing structure:
+            const batchPromises = data.map(item => supabase.from(collectionName).upsert(item));
+            await Promise.all(batchPromises);
+        } else {
+            // Local storage update is handled by the passed setter (e.g. setUsers)
+            // This function is just a proxy if we need to intercept for cloud.
+        }
     };
-    
+
     // We need to wrap the setters passed to SettingsModal to handle Cloud Mode
-    const wrapSetter = <T extends {id: string}>(collectionName: string, localSetter: React.Dispatch<React.SetStateAction<T[]>>) => {
+    const wrapSetter = <T extends { id: string }>(collectionName: string, localSetter: React.Dispatch<React.SetStateAction<T[]>>) => {
         return (newData: T[]) => {
             localSetter(newData); // Always update local state for immediate UI feedback (optimistic)
-            if (isCloudMode && db) {
+            if (isCloudMode && supabase) {
                 // Determine deletions
                 // Fetch current collection to find diff? No, too expensive.
                 // Simple approach: Upsert all. (Deleted items will remain in cloud - limitation of this simple sync)
                 // Better approach for this app size: The UI state `newData` IS the source of truth.
                 // We should technically delete items not in `newData`.
                 // For now, let's just upsert for safety.
-                newData.forEach(item => setDoc(doc(db, collectionName, item.id), item));
+                newData.forEach(item => supabase.from(collectionName).upsert(item));
             }
         }
     }
@@ -343,7 +379,7 @@ const App: React.FC = () => {
             deliveryDateEnd: '',
         });
     };
-    
+
     const handleLogin = (username: string, password: string): boolean => {
         const user = users.find(u => u.username === username && u.password === password);
         if (user) {
@@ -353,7 +389,7 @@ const App: React.FC = () => {
         }
         return false;
     };
-    
+
     const handleLogout = () => {
         setCurrentUser(null);
     };
@@ -393,11 +429,11 @@ const App: React.FC = () => {
                         onDeleteLog={handleDeleteCorrespondenceLog}
                     />
                 )}
-                 {currentPage === 'report' && (
+                {currentPage === 'report' && (
                     <ReportPage jobs={jobs} clients={clients} platingTypes={platingTypes} settlementMonth={settlementMonth} />
                 )}
             </main>
-            
+
             {isDetailModalOpen && selectedJob && (
                 <JobDetailModal
                     isOpen={isDetailModalOpen}
@@ -419,7 +455,7 @@ const App: React.FC = () => {
             )}
 
             {isSettingsModalOpen && (
-                 <SettingsModal
+                <SettingsModal
                     isOpen={isSettingsModalOpen}
                     onClose={() => setIsSettingsModalOpen(false)}
                     currentUser={currentUser}
@@ -431,37 +467,37 @@ const App: React.FC = () => {
                     settlementMonth={settlementMonth}
                     jobs={jobs}
                     correspondenceLogs={correspondenceLogs}
-                    
+
                     // Wrapped setters for cloud sync
                     onUsersSave={wrapSetter('users', setUsers)}
                     onPlatingTypesSave={wrapSetter('platingTypes', setPlatingTypes)}
                     onJigsSave={wrapSetter('jigs', setJigs)}
                     onClientsSave={wrapSetter('clients', setClients)}
-                    
+
                     onProcessDurationsSave={(data) => {
                         setProcessDurations(data);
-                        if(isCloudMode && db) setDoc(doc(db, 'appSettings', 'processDurations'), data);
+                        if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'processDurations', value: data });
                     }}
                     onSettlementMonthSave={(month) => {
                         setSettlementMonth(month);
-                        if(isCloudMode && db) setDoc(doc(db, 'appSettings', 'general'), { settlementMonth: month });
+                        if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'general', value: { settlementMonth: month } });
                     }}
                     onJobsSave={wrapSetter('jobs', setJobs)}
                     onCorrespondenceLogsSave={wrapSetter('correspondenceLogs', setCorrespondenceLogs)}
-                    
+
                     // Cloud Config
                     onOpenCloudConfig={() => setIsCloudConfigModalOpen(true)}
                     isCloudConnected={isCloudMode}
                 />
             )}
-            
+
             {isCloudConfigModalOpen && (
                 <CloudConfigModal
                     isOpen={isCloudConfigModalOpen}
                     onClose={() => setIsCloudConfigModalOpen(false)}
-                    config={firebaseConfig}
-                    onSave={(cfg) => { setFirebaseConfig(cfg); setIsCloudConfigModalOpen(false); }}
-                    onDisconnect={() => { setFirebaseConfig(null); setIsCloudConfigModalOpen(false); }}
+                    config={supabaseConfig}
+                    onSave={(cfg) => { setSupabaseConfig(cfg); setIsCloudConfigModalOpen(false); }}
+                    onDisconnect={() => { setSupabaseConfig(null); setIsCloudConfigModalOpen(false); }}
                     onUploadLocalData={handleUploadLocalData}
                 />
             )}

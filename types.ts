@@ -21,7 +21,7 @@ export interface Job {
   deliveryDate: string; // YYYY-MM-DD
   status: ProcessStatus;
   memo?: string;
-  
+
   // Audit Trail
   createdBy?: string; // User ID
   createdAt?: string; // ISO String
@@ -37,7 +37,7 @@ export interface PlatingTypeMaster {
 }
 
 export interface JigMaster {
-  id:string;
+  id: string;
   name: string;
   totalQuantity: number; // 1ロットあたりの最大数量
 }
@@ -81,8 +81,8 @@ export interface CorrespondenceLog {
   memo: string;
 }
 
-export interface FirebaseConfig {
-  apiKey: string;
-  authDomain: string;
-  projectId: string;
+
+export interface SupabaseConfig {
+  url: string;
+  anonKey: string;
 }
