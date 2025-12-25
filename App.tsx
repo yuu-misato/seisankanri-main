@@ -485,11 +485,9 @@ const App: React.FC = () => {
                     onJobsSave={wrapSetter('jobs', setJobs)}
                     onCorrespondenceLogsSave={wrapSetter('correspondenceLogs', setCorrespondenceLogs)}
 
-                    // Cloud Config
-                    onOpenCloudConfig={() => { }}
-                    isCloudConnected={isCloudMode}
                 />
             )}
+
         </div>
     );
 };

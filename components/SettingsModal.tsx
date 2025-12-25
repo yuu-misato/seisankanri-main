@@ -2,35 +2,35 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PlatingTypeMaster, JigMaster, ClientMaster, ProcessStageDurations, ProcessStatus, User, Job, CorrespondenceLog, FirebaseConfig } from '../types';
 import { CloseIcon, CogIcon, PlusIcon, TrashIcon, PencilIcon, DownloadIcon, UploadIcon, CloudIcon } from './icons';
-import { CloudConfigModal } from './CloudConfigModal';
+
 
 interface SettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  currentUser: User;
-  users: User[];
-  platingTypes: PlatingTypeMaster[];
-  jigs: JigMaster[];
-  clients: ClientMaster[];
-  processDurations: ProcessStageDurations;
-  settlementMonth: number;
-  jobs: Job[];
-  correspondenceLogs: CorrespondenceLog[];
-  onUsersSave: (data: User[]) => void;
-  onPlatingTypesSave: (data: PlatingTypeMaster[]) => void;
-  onJigsSave: (data: JigMaster[]) => void;
-  onClientsSave: (data: ClientMaster[]) => void;
-  onProcessDurationsSave: (data: ProcessStageDurations) => void;
-  onSettlementMonthSave: (month: number) => void;
-  onJobsSave: (data: Job[]) => void;
-  onCorrespondenceLogsSave: (data: CorrespondenceLog[]) => void;
-  
-  // Cloud Props
-  onOpenCloudConfig: () => void;
-  isCloudConnected: boolean;
+    isOpen: boolean;
+    onClose: () => void;
+    currentUser: User;
+    users: User[];
+    platingTypes: PlatingTypeMaster[];
+    jigs: JigMaster[];
+    clients: ClientMaster[];
+    processDurations: ProcessStageDurations;
+    settlementMonth: number;
+    jobs: Job[];
+    correspondenceLogs: CorrespondenceLog[];
+    onUsersSave: (data: User[]) => void;
+    onPlatingTypesSave: (data: PlatingTypeMaster[]) => void;
+    onJigsSave: (data: JigMaster[]) => void;
+    onClientsSave: (data: ClientMaster[]) => void;
+    onProcessDurationsSave: (data: ProcessStageDurations) => void;
+    onSettlementMonthSave: (month: number) => void;
+    onJobsSave: (data: Job[]) => void;
+    onCorrespondenceLogsSave: (data: CorrespondenceLog[]) => void;
+
+    // Cloud Props
+    onOpenCloudConfig: () => void;
+    isCloudConnected: boolean;
 }
 
-type Tab = 'plating' | 'jigs' | 'clients' | 'process' | 'report' | 'users' | 'data' | 'cloud';
+type Tab = 'plating' | 'jigs' | 'clients' | 'process' | 'report' | 'users' | 'data';
 
 type Field = {
     key: string;
@@ -50,7 +50,7 @@ const EditableRow = ({ item, onSave, onCancel, fields, isNew }: { item: any, onS
         const isNumber = e.target.type === 'number';
         setEditItem({ ...editItem, [name]: isNumber ? Number(value) : value });
     };
-    
+
     const handleSaveClick = () => {
         if (isNew) {
             if (!editItem.username.trim() || !editItem.password.trim()) {
@@ -58,8 +58,8 @@ const EditableRow = ({ item, onSave, onCancel, fields, isNew }: { item: any, onS
                 return;
             }
         }
-        
-        const itemToSave = {...editItem};
+
+        const itemToSave = { ...editItem };
         // If password is blank on edit, don't change it.
         if (!isNew && itemToSave.password === '') {
             delete itemToSave.password;
@@ -116,7 +116,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const [localClients, setLocalClients] = useState<ClientMaster[]>([]);
     const [localProcessDurations, setLocalProcessDurations] = useState<ProcessStageDurations>(processDurations);
     const [localSettlementMonth, setLocalSettlementMonth] = useState<number>(settlementMonth);
-    
+
     const [editingId, setEditingId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -140,18 +140,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         onSettlementMonthSave(localSettlementMonth);
         onClose();
     };
-    
-    const handleAddItem = <T extends {id: string}>(setter: React.Dispatch<React.SetStateAction<T[]>>, newItem: T) => {
+
+    const handleAddItem = <T extends { id: string }>(setter: React.Dispatch<React.SetStateAction<T[]>>, newItem: T) => {
         setter(prev => [...prev, newItem]);
         setEditingId(newItem.id);
     };
 
-    const handleUpdateItem = <T extends {id: string}>(setter: React.Dispatch<React.SetStateAction<T[]>>, updatedItem: Partial<T> & { id: string }) => {
+    const handleUpdateItem = <T extends { id: string }>(setter: React.Dispatch<React.SetStateAction<T[]>>, updatedItem: Partial<T> & { id: string }) => {
         setter(prev => prev.map(item => item.id === updatedItem.id ? { ...item, ...updatedItem } : item));
         setEditingId(null);
     };
 
-    const handleDeleteItem = <T extends {id: string}>(setter: React.Dispatch<React.SetStateAction<T[]>>, id: string) => {
+    const handleDeleteItem = <T extends { id: string }>(setter: React.Dispatch<React.SetStateAction<T[]>>, id: string) => {
         if (window.confirm('この項目を削除しますか？')) {
             setter(prev => prev.filter(item => item.id !== id));
         }
@@ -170,7 +170,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             jobs,
             correspondenceLogs
         };
-        
+
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -190,7 +190,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         reader.onload = (event) => {
             try {
                 const data = JSON.parse(event.target?.result as string);
-                
+
                 if (window.confirm('現在のデータを上書きして、インポートしたデータを読み込みますか？この操作は取り消せません。')) {
                     if (data.users) onUsersSave(data.users);
                     if (data.platingTypes) onPlatingTypesSave(data.platingTypes);
@@ -200,7 +200,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     if (data.settlementMonth) onSettlementMonthSave(data.settlementMonth);
                     if (data.jobs) onJobsSave(data.jobs);
                     if (data.correspondenceLogs) onCorrespondenceLogsSave(data.correspondenceLogs);
-                    
+
                     alert('データの復元が完了しました。');
                     onClose();
                 }
@@ -217,11 +217,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         { key: 'unitPrice', label: '基準単価 (円)', type: 'number' },
         { key: 'costPerLot', label: 'ロット毎の原価 (円)', type: 'number' },
     ];
-     const jigFields: Field[] = [
+    const jigFields: Field[] = [
         { key: 'name', label: '治具名', type: 'text' },
         { key: 'totalQuantity', label: 'ロット数量', type: 'number' },
     ];
-     const clientFields: Field[] = [
+    const clientFields: Field[] = [
         { key: 'name', label: '顧客名', type: 'text' },
         { key: 'contactPerson', label: '担当者', type: 'text' },
     ];
@@ -231,7 +231,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         { key: 'password', label: 'パスワード', type: 'password' },
         { key: 'role', label: '役割', type: 'select', options: ['admin', 'user'] },
     ];
-    
+
     if (!isOpen) return null;
 
     const TabButton = ({ tab, label }: { tab: Tab, label: string }) => (
@@ -249,16 +249,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 return (
                     <div>
                         <table className="w-full text-sm">
-                           <thead>
-                               <tr className="text-left bg-slate-100">
-                                   {userFields.map(f=><th key={f.key} className="p-2 font-semibold">{f.label}</th>)}
-                                   <th className="p-2 font-semibold">操作</th>
-                               </tr>
-                           </thead>
-                           <tbody>
-                                {localUsers.map(item => editingId === item.id ? 
+                            <thead>
+                                <tr className="text-left bg-slate-100">
+                                    {userFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}
+                                    <th className="p-2 font-semibold">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {localUsers.map(item => editingId === item.id ?
                                     <tr key={item.id} className="bg-slate-50">
-                                        <EditableRow item={{...item, password: ''}} onSave={(updated) => handleUpdateItem(setLocalUsers, updated)} onCancel={() => setEditingId(null)} fields={userFields} isNew={item.id.startsWith('new-')} />
+                                        <EditableRow item={{ ...item, password: '' }} onSave={(updated) => handleUpdateItem(setLocalUsers, updated)} onCancel={() => setEditingId(null)} fields={userFields} isNew={item.id.startsWith('new-')} />
                                     </tr>
                                     :
                                     <tr key={item.id} className="border-b hover:bg-slate-50">
@@ -270,18 +270,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalUsers, item.id)}><TrashIcon /></button></td>
                                     </tr>
                                 )}
-                           </tbody>
+                            </tbody>
                         </table>
-                        <button onClick={() => handleAddItem(setLocalUsers, {id: `new-${Date.now()}`, name: '', username: '', password: '', role: 'user'})} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />ユーザーを追加</button>
+                        <button onClick={() => handleAddItem(setLocalUsers, { id: `new-${Date.now()}`, name: '', username: '', password: '', role: 'user' })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />ユーザーを追加</button>
                     </div>
                 );
             case 'plating':
                 return (
                     <div>
                         <table className="w-full text-sm">
-                           <thead><tr className="text-left bg-slate-100">{platingFields.map(f=><th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
-                           <tbody>
-                                {localPlatingTypes.map(item => editingId === item.id ? 
+                            <thead><tr className="text-left bg-slate-100">{platingFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
+                            <tbody>
+                                {localPlatingTypes.map(item => editingId === item.id ?
                                     <tr key={item.id} className="bg-slate-50">
                                         <EditableRow item={item} onSave={(updated) => handleUpdateItem(setLocalPlatingTypes, updated)} onCancel={() => setEditingId(null)} fields={platingFields} isNew={item.id.startsWith('new-')} />
                                     </tr>
@@ -291,18 +291,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalPlatingTypes, item.id)}><TrashIcon /></button></td>
                                     </tr>
                                 )}
-                           </tbody>
+                            </tbody>
                         </table>
-                        <button onClick={() => handleAddItem(setLocalPlatingTypes, {id: `new-${Date.now()}`, name: '', unitPrice: 0, costPerLot: 0})} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />めっき種を追加</button>
+                        <button onClick={() => handleAddItem(setLocalPlatingTypes, { id: `new-${Date.now()}`, name: '', unitPrice: 0, costPerLot: 0 })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />めっき種を追加</button>
                     </div>
                 );
             case 'jigs':
-                 return (
+                return (
                     <div>
                         <table className="w-full text-sm">
-                           <thead><tr className="text-left bg-slate-100">{jigFields.map(f=><th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
-                           <tbody>
-                                {localJigs.map(item => editingId === item.id ? 
+                            <thead><tr className="text-left bg-slate-100">{jigFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
+                            <tbody>
+                                {localJigs.map(item => editingId === item.id ?
                                     <tr key={item.id} className="bg-slate-50">
                                         <EditableRow item={item} onSave={(updated) => handleUpdateItem(setLocalJigs, updated)} onCancel={() => setEditingId(null)} fields={jigFields} isNew={item.id.startsWith('new-')} />
                                     </tr>
@@ -312,18 +312,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalJigs, item.id)}><TrashIcon /></button></td>
                                     </tr>
                                 )}
-                           </tbody>
+                            </tbody>
                         </table>
-                        <button onClick={() => handleAddItem(setLocalJigs, {id: `new-${Date.now()}`, name: '', totalQuantity: 0})} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />治具を追加</button>
+                        <button onClick={() => handleAddItem(setLocalJigs, { id: `new-${Date.now()}`, name: '', totalQuantity: 0 })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />治具を追加</button>
                     </div>
                 );
             case 'clients':
                 return (
                     <div>
                         <table className="w-full text-sm">
-                           <thead><tr className="text-left bg-slate-100">{clientFields.map(f=><th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
-                           <tbody>
-                                {localClients.map(item => editingId === item.id ? 
+                            <thead><tr className="text-left bg-slate-100">{clientFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
+                            <tbody>
+                                {localClients.map(item => editingId === item.id ?
                                     <tr key={item.id} className="bg-slate-50">
                                         <EditableRow item={item} onSave={(updated) => handleUpdateItem(setLocalClients, updated)} onCancel={() => setEditingId(null)} fields={clientFields} isNew={item.id.startsWith('new-')} />
                                     </tr>
@@ -333,9 +333,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalClients, item.id)}><TrashIcon /></button></td>
                                     </tr>
                                 )}
-                           </tbody>
+                            </tbody>
                         </table>
-                        <button onClick={() => handleAddItem(setLocalClients, {id: `new-${Date.now()}`, name: '', contactPerson: ''})} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />顧客を追加</button>
+                        <button onClick={() => handleAddItem(setLocalClients, { id: `new-${Date.now()}`, name: '', contactPerson: '' })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />顧客を追加</button>
                     </div>
                 );
             case 'process':
@@ -346,14 +346,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             <div key={key} className="grid grid-cols-2 items-center">
                                 <label className="text-sm text-slate-700">{key}</label>
                                 <div className="flex items-center gap-2">
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={localProcessDurations[key as keyof ProcessStageDurations]}
-                                    onChange={(e) => setLocalProcessDurations(prev => ({...prev, [key]: Number(e.target.value)}))}
-                                    className="w-24 border border-slate-300 rounded-md shadow-sm p-2 focus:ring-cyan-500 focus:border-cyan-500"
-                                />
-                                <span className="text-sm text-slate-600">日</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={localProcessDurations[key as keyof ProcessStageDurations]}
+                                        onChange={(e) => setLocalProcessDurations(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                                        className="w-24 border border-slate-300 rounded-md shadow-sm p-2 focus:ring-cyan-500 focus:border-cyan-500"
+                                    />
+                                    <span className="text-sm text-slate-600">日</span>
                                 </div>
                             </div>
                         ))}
@@ -375,23 +375,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     </div>
                 );
-            case 'cloud':
-                return (
-                    <div className="space-y-6">
-                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                            <h4 className="font-semibold text-slate-800 flex items-center gap-2 mb-2">
-                                <CloudIcon className={isCloudConnected ? "text-green-500" : "text-slate-400"} />
-                                接続ステータス: {isCloudConnected ? <span className="text-green-600">接続済み</span> : <span className="text-slate-500">未接続</span>}
-                            </h4>
-                            <p className="text-sm text-slate-600 mb-4">
-                                Google Firebaseと連携することで、複数の端末間でリアルタイムにデータを共有できます。
-                            </p>
-                            <button onClick={onOpenCloudConfig} className="px-4 py-2 bg-white text-cyan-600 border border-cyan-500 rounded-md hover:bg-cyan-50">
-                                接続設定を変更する
-                            </button>
-                        </div>
-                    </div>
-                )
+
             case 'data':
                 return (
                     <div className="space-y-6">
@@ -413,12 +397,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 <br />
                                 <span className="text-red-600 font-bold">注意: 現在のデータはすべて上書きされます。</span>
                             </p>
-                            <input 
-                                type="file" 
-                                accept=".json" 
-                                ref={fileInputRef} 
-                                onChange={handleImportData} 
-                                className="hidden" 
+                            <input
+                                type="file"
+                                accept=".json"
+                                ref={fileInputRef}
+                                onChange={handleImportData}
+                                className="hidden"
                             />
                             <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700">
                                 <UploadIcon />
@@ -444,18 +428,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                 <div className="flex-grow flex">
                     <nav className="border-r border-slate-200 p-4 w-48 flex-shrink-0">
-                       <div className="flex flex-col gap-1">
-                           {currentUser.role === 'admin' && <TabButton tab="users" label="ユーザー管理" />}
-                           <TabButton tab="plating" label="めっき種マスター" />
-                           <TabButton tab="jigs" label="治具マスター" />
-                           <TabButton tab="clients" label="顧客マスター" />
-                           <TabButton tab="process" label="工程設定" />
-                           <TabButton tab="report" label="レポート設定" />
-                           <div className="border-t border-slate-200 my-2 pt-2">
-                                <TabButton tab="cloud" label="クラウド同期" />
+                        <div className="flex flex-col gap-1">
+                            {currentUser.role === 'admin' && <TabButton tab="users" label="ユーザー管理" />}
+                            <TabButton tab="plating" label="めっき種マスター" />
+                            <TabButton tab="jigs" label="治具マスター" />
+                            <TabButton tab="clients" label="顧客マスター" />
+                            <TabButton tab="process" label="工程設定" />
+                            <TabButton tab="report" label="レポート設定" />
+                            <div className="border-t border-slate-200 my-2 pt-2">
                                 <TabButton tab="data" label="データ管理" />
-                           </div>
-                       </div>
+                            </div>
+                        </div>
                     </nav>
                     <main className="flex-grow p-6 overflow-y-auto">
                         {renderTabContent()}
