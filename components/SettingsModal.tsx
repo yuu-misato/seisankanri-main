@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { PlatingTypeMaster, JigMaster, ClientMaster, ProcessStageDurations, ProcessStatus, User, Job, CorrespondenceLog, FirebaseConfig } from '../types';
+import { PlatingTypeMaster, JigMaster, ClientMaster, ProcessStageDurations, ProcessStatus, User, Job, CorrespondenceLog } from '../types';
 import { CloseIcon, CogIcon, PlusIcon, TrashIcon, PencilIcon, DownloadIcon, UploadIcon, CloudIcon } from './icons';
 
 
@@ -426,8 +426,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100"><CloseIcon /></button>
                 </header>
 
-                <div className="flex-grow flex">
-                    <nav className="border-r border-slate-200 p-4 w-48 flex-shrink-0">
+                <div className="flex-grow flex overflow-hidden">
+                    <nav className="border-r border-slate-200 p-4 w-48 flex-shrink-0 overflow-y-auto">
                         <div className="flex flex-col gap-1">
                             {currentUser.role === 'admin' && <TabButton tab="users" label="ユーザー管理" />}
                             <TabButton tab="plating" label="めっき種マスター" />
