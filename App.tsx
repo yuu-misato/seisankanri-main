@@ -96,6 +96,7 @@ const App: React.FC = () => {
     const [paginationPage, setPaginationPage] = useState<number>(1);
     const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+    const [isNewJob, setIsNewJob] = useState(false);
 
 
     const handleBulkDelete = async () => {
