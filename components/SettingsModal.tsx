@@ -144,7 +144,102 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         setEditingId(newItem.id);
     };
 
-    // ... (rest of functions) ...
+    const handleUpdateItem = <T extends { id: string }>(setter: React.Dispatch<React.SetStateAction<T[]>>, updatedItem: Partial<T> & { id: string }) => {
+        setter(prev => prev.map(item => item.id === updatedItem.id ? { ...item, ...updatedItem } : item));
+        setEditingId(null);
+    };
+
+    const handleDeleteItem = <T extends { id: string }>(setter: React.Dispatch<React.SetStateAction<T[]>>, id: string) => {
+        if (window.confirm('この項目を削除しますか？')) {
+            setter(prev => prev.filter(item => item.id !== id));
+        }
+    };
+
+    const handleExportData = () => {
+        const data = {
+            version: "1.0",
+            exportDate: new Date().toISOString(),
+            users,
+            platingTypes,
+            jigs,
+            clients,
+            processDurations,
+            settlementMonth,
+            jobs,
+            correspondenceLogs
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `imai_plating_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = JSON.parse(event.target?.result as string);
+
+                if (window.confirm('現在のデータを上書きして、インポートしたデータを読み込みますか？この操作は取り消せません。')) {
+                    if (data.users) onUsersSave(data.users);
+                    if (data.platingTypes) onPlatingTypesSave(data.platingTypes);
+                    if (data.jigs) onJigsSave(data.jigs);
+                    if (data.clients) onClientsSave(data.clients);
+                    if (data.processDurations) onProcessDurationsSave(data.processDurations);
+                    if (data.settlementMonth) onSettlementMonthSave(data.settlementMonth);
+                    if (data.jobs) onJobsSave(data.jobs);
+                    if (data.correspondenceLogs) onCorrespondenceLogsSave(data.correspondenceLogs);
+
+                    alert('データの復元が完了しました。');
+                    onClose();
+                }
+            } catch (error) {
+                console.error(error);
+                alert('ファイルの読み込みに失敗しました。正しいJSONファイルを選択してください。');
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    const platingFields: Field[] = [
+        { key: 'name', label: 'めっき種名', type: 'text' },
+        { key: 'unitPrice', label: '基準単価 (円)', type: 'number' },
+        { key: 'costPerLot', label: 'ロット毎の原価 (円)', type: 'number' },
+    ];
+    const jigFields: Field[] = [
+        { key: 'name', label: '治具名', type: 'text' },
+        { key: 'totalQuantity', label: 'ロット数量', type: 'number' },
+    ];
+    const clientFields: Field[] = [
+        { key: 'name', label: '顧客名', type: 'text' },
+        { key: 'contactPerson', label: '担当者', type: 'text' },
+    ];
+    const userFields: Field[] = [
+        { key: 'name', label: '氏名', type: 'text' },
+        { key: 'username', label: 'ユーザー名', type: 'text' },
+        { key: 'password', label: 'パスワード', type: 'password' },
+        { key: 'role', label: '役割', type: 'select', options: ['admin', 'user'] },
+    ];
+
+    if (!isOpen) return null;
+
+    const TabButton = ({ tab, label }: { tab: Tab, label: string }) => (
+        <button
+            onClick={() => { setEditingId(null); setActiveTab(tab); }}
+            className={`w-full text-left px-3 py-2 text-sm font-medium rounded-md ${activeTab === tab ? 'bg-cyan-100 text-cyan-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+        >
+            {label}
+        </button>
+    );
 
     const renderTabContent = () => {
         switch (activeTab) {
