@@ -443,7 +443,14 @@ const App: React.FC = () => {
                 // Better approach for this app size: The UI state `newData` IS the source of truth.
                 // We should technically delete items not in `newData`.
                 // For now, let's just upsert for safety.
-                newData.forEach(item => supabase.from(collectionName).upsert(item));
+                const promises = newData.map(item => supabase.from(collectionName).upsert(item));
+                Promise.all(promises).then((results) => {
+                    const errors = results.filter(r => r.error);
+                    if (errors.length > 0) {
+                        console.error(`Error syncing ${collectionName}:`, errors);
+                        alert(`データの保存中にエラーが発生しました (${collectionName})。詳細はコンソールを確認してください。`);
+                    }
+                });
             }
         }
     }
