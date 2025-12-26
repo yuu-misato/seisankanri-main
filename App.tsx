@@ -582,108 +582,133 @@ const App: React.FC = () => {
                             {viewMode === 'list' && (
                                 <JobList
                                     jobs={paginatedJobs}
-                                    platingTypes={platingTypes}
-                                    clients={clients}
-                                    onSelectJob={handleSelectJob}
-                                    users={users}
-                                    selectedJobIds={selectedJobIds}
+                                    onToggleSelect={handleToggleSelectJob}
+                                    onSelectAll={handleSelectAllJobs}
+                                />
+                            )}
+                            {viewMode === 'gantt' && (
+                                <GanttChart jobs={paginatedJobs} onSelectJob={handleSelectJob} />
+                            )}
+                        </div>
+                    )}
+                    {currentPage === 'correspondence' && (
+                        <CorrespondencePage
+                            currentUser={currentUser}
+                            clients={clients}
+                            jobs={jobs}
+                            correspondenceLogs={correspondenceLogs}
+                            users={users}
+                            onSaveLog={handleSaveCorrespondenceLog}
+                            onDeleteLog={handleDeleteCorrespondenceLog}
+                            onLinkToJob={handleSelectJob}
+                        />
+                    )}
+                    {currentPage === 'report' && (
+                        <ReportPage
+                            jobs={jobs}
+                            platingTypes={platingTypes}
+                            clients={clients}
+                            processDurations={processDurations}
+                            settlementMonth={settlementMonth}
+                        />
+                    )}
                 </main>
 
                 {/* Bulk Action Bar */}
-                    {selectedJobIds.length > 0 && currentPage === 'management' && (
-                        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-6 z-30 transition-all animate-fade-in-up">
-                            <span className="font-bold">{selectedJobIds.length}件 選択中</span>
-                            <div className="h-6 w-px bg-slate-600"></div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setIsBulkEditModalOpen(true)}
-                                    className="flex items-center gap-2 hover:text-cyan-400 transition-colors"
-                                >
-                                    <PencilIcon className="h-4 w-4" />
-                                    <span>一括編集</span>
-                                </button>
-                                <button
-                                    onClick={handleBulkDelete}
-                                    className="flex items-center gap-2 hover:text-red-400 transition-colors"
-                                >
-                                    <TrashIcon className="h-4 w-4" />
-                                    <span>削除</span>
-                                </button>
-                            </div>
+                {selectedJobIds.length > 0 && currentPage === 'management' && (
+                    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-6 z-30 transition-all animate-fade-in-up">
+                        <span className="font-bold">{selectedJobIds.length}件 選択中</span>
+                        <div className="h-6 w-px bg-slate-600"></div>
+                        <div className="flex items-center gap-2">
                             <button
-                                onClick={() => setSelectedJobIds([])}
-                                className="ml-2 text-slate-400 hover:text-white text-sm"
+                                onClick={() => setIsBulkEditModalOpen(true)}
+                                className="flex items-center gap-2 hover:text-cyan-400 transition-colors"
                             >
-                                解除
+                                <PencilIcon className="h-4 w-4" />
+                                <span>一括編集</span>
+                            </button>
+                            <button
+                                onClick={handleBulkDelete}
+                                className="flex items-center gap-2 hover:text-red-400 transition-colors"
+                            >
+                                <TrashIcon className="h-4 w-4" />
+                                <span>削除</span>
                             </button>
                         </div>
-                    )}
+                        <button
+                            onClick={() => setSelectedJobIds([])}
+                            className="ml-2 text-slate-400 hover:text-white text-sm"
+                        >
+                            解除
+                        </button>
+                    </div>
+                )}
 
-                    <BulkEditModal
-                        isOpen={isBulkEditModalOpen}
-                        onClose={() => setIsBulkEditModalOpen(false)}
-                        selectedCount={selectedJobIds.length}
-                        onSave={handleBulkUpdate}
-                        platingTypes={platingTypes}
-                    />
+                <BulkEditModal
+                    isOpen={isBulkEditModalOpen}
+                    onClose={() => setIsBulkEditModalOpen(false)}
+                    selectedCount={selectedJobIds.length}
+                    onSave={handleBulkUpdate}
+                    platingTypes={platingTypes}
+                />
 
-                    {
-                        isDetailModalOpen && selectedJob && (
-                            <JobDetailModal
-                                isOpen={isDetailModalOpen}
-                                onClose={handleCloseModal}
-                                onSave={handleSaveJob}
-                                onDelete={handleDeleteJob}
-                                onDuplicate={handleDuplicateJob}
-                                job={selectedJob}
-                                allJobs={jobs}
-                                isNew={isNewJob}
-                                clients={clients}
-                                platingTypes={platingTypes}
-                                jigs={jigs}
-                                processDurations={processDurations}
-                                correspondenceLogs={correspondenceLogs}
-                                users={users}
-                                onDeleteCorrespondenceLog={handleDeleteCorrespondenceLog}
-                            />
-                        )
-                    }
+                {
+                    isDetailModalOpen && selectedJob && (
+                        <JobDetailModal
+                            isOpen={isDetailModalOpen}
+                            onClose={handleCloseModal}
+                            onSave={handleSaveJob}
+                            onDelete={handleDeleteJob}
+                            onDuplicate={handleDuplicateJob}
+                            job={selectedJob}
+                            allJobs={jobs}
+                            isNew={isNewJob}
+                            clients={clients}
+                            platingTypes={platingTypes}
+                            jigs={jigs}
+                            processDurations={processDurations}
+                            correspondenceLogs={correspondenceLogs}
+                            users={users}
+                            onDeleteCorrespondenceLog={handleDeleteCorrespondenceLog}
+                        />
+                    )
+                }
 
-                    {
-                        isSettingsModalOpen && (
-                            <SettingsModal
-                                isOpen={isSettingsModalOpen}
-                                onClose={() => setIsSettingsModalOpen(false)}
-                                currentUser={currentUser}
-                                users={users}
-                                platingTypes={platingTypes}
-                                jigs={jigs}
-                                clients={clients}
-                                processDurations={processDurations}
-                                settlementMonth={settlementMonth}
-                                jobs={jobs}
-                                correspondenceLogs={correspondenceLogs}
+                {
+                    isSettingsModalOpen && (
+                        <SettingsModal
+                            isOpen={isSettingsModalOpen}
+                            onClose={() => setIsSettingsModalOpen(false)}
+                            currentUser={currentUser}
+                            users={users}
+                            platingTypes={platingTypes}
+                            jigs={jigs}
+                            clients={clients}
+                            processDurations={processDurations}
+                            settlementMonth={settlementMonth}
+                            jobs={jobs}
+                            correspondenceLogs={correspondenceLogs}
 
-                                // Wrapped setters for cloud sync
-                                onUsersSave={wrapSetter('users', setUsers)}
-                                onPlatingTypesSave={wrapSetter('platingTypes', setPlatingTypes)}
-                                onJigsSave={wrapSetter('jigs', setJigs)}
-                                onClientsSave={wrapSetter('clients', setClients)}
+                            // Wrapped setters for cloud sync
+                            onUsersSave={wrapSetter('users', setUsers)}
+                            onPlatingTypesSave={wrapSetter('platingTypes', setPlatingTypes)}
+                            onJigsSave={wrapSetter('jigs', setJigs)}
+                            onClientsSave={wrapSetter('clients', setClients)}
 
-                                onProcessDurationsSave={(data) => {
-                                    setProcessDurations(data);
-                                    if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'processDurations', value: data });
-                                }}
-                                onSettlementMonthSave={(month) => {
-                                    setSettlementMonth(month);
-                                    if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'general', value: { settlementMonth: month } });
-                                }}
-                                onJobsSave={wrapSetter('jobs', setJobs)}
-                                onCorrespondenceLogsSave={wrapSetter('correspondenceLogs', setCorrespondenceLogs)}
+                            onProcessDurationsSave={(data) => {
+                                setProcessDurations(data);
+                                if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'processDurations', value: data });
+                            }}
+                            onSettlementMonthSave={(month) => {
+                                setSettlementMonth(month);
+                                if (isCloudMode && supabase) supabase.from('appSettings').upsert({ key: 'general', value: { settlementMonth: month } });
+                            }}
+                            onJobsSave={wrapSetter('jobs', setJobs)}
+                            onCorrespondenceLogsSave={wrapSetter('correspondenceLogs', setCorrespondenceLogs)}
 
-                            />
-                        )
-                    }
+                        />
+                    )
+                }
 
             </div >
         );
