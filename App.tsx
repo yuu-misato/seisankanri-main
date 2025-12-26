@@ -519,6 +519,7 @@ const App: React.FC = () => {
                         users={users}
                         onSaveLog={handleSaveCorrespondenceLog}
                         onDeleteLog={handleDeleteCorrespondenceLog}
+                        onLinkToJob={handleSelectJob}
                     />
                 )}
                 {currentPage === 'report' && (

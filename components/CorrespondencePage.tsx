@@ -10,6 +10,7 @@ interface CorrespondencePageProps {
     users: User[];
     onSaveLog: (log: Omit<CorrespondenceLog, 'id' | 'correspondenceDate' | 'staffId'>) => void;
     onDeleteLog: (logId: string) => void;
+    onLinkToJob?: (job: Job) => void;
 }
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => {
@@ -50,9 +51,9 @@ const StarRatingDisplay = ({ rating }: { rating: number }) => (
     </div>
 );
 
-const CorrespondencePage: React.FC<CorrespondencePageProps> = ({ currentUser, clients, jobs, correspondenceLogs, users, onSaveLog, onDeleteLog }) => {
+const CorrespondencePage: React.FC<CorrespondencePageProps> = ({ currentUser, clients, jobs, correspondenceLogs, users, onSaveLog, onDeleteLog, onLinkToJob }) => {
     const [newLog, setNewLog] = useState({ clientId: '', jobId: '', temperature: 3, memo: '' });
-    
+
     const userMap = useMemo(() => new Map(users.map(u => [u.id, u.name])), [users]);
     const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.name])), [clients]);
     const jobMap = useMemo(() => new Map(jobs.map(j => [j.id, j.productName])), [jobs]);
@@ -61,9 +62,9 @@ const CorrespondencePage: React.FC<CorrespondencePageProps> = ({ currentUser, cl
         if (!newLog.clientId) return [];
         return jobs.filter(job => job.clientId === newLog.clientId);
     }, [jobs, newLog.clientId]);
-    
+
     const sortedLogs = useMemo(() => {
-        return [...correspondenceLogs].sort((a,b) => new Date(b.correspondenceDate).getTime() - new Date(a.correspondenceDate).getTime());
+        return [...correspondenceLogs].sort((a, b) => new Date(b.correspondenceDate).getTime() - new Date(a.correspondenceDate).getTime());
     }, [correspondenceLogs]);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -100,7 +101,7 @@ const CorrespondencePage: React.FC<CorrespondencePageProps> = ({ currentUser, cl
                                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
-                         <div>
+                        <div>
                             <label className="block text-sm font-medium text-slate-600 mb-1">関連案件 (任意)</label>
                             <select
                                 value={newLog.jobId}
@@ -114,7 +115,7 @@ const CorrespondencePage: React.FC<CorrespondencePageProps> = ({ currentUser, cl
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-600 mb-1">顧客の温度感</label>
-                            <StarRatingInput rating={newLog.temperature} setRating={(r) => setNewLog({...newLog, temperature: r})} />
+                            <StarRatingInput rating={newLog.temperature} setRating={(r) => setNewLog({ ...newLog, temperature: r })} />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-600 mb-1">要望・メモ</label>
@@ -139,7 +140,7 @@ const CorrespondencePage: React.FC<CorrespondencePageProps> = ({ currentUser, cl
                 <div className="space-y-4">
                     {sortedLogs.map(log => (
                         <div key={log.id} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative">
-                             <button
+                            <button
                                 onClick={() => onDeleteLog(log.id)}
                                 className="absolute top-2 right-2 p-1 text-slate-400 hover:text-red-600 rounded-full hover:bg-slate-100 transition-colors"
                                 aria-label="削除"
@@ -149,17 +150,31 @@ const CorrespondencePage: React.FC<CorrespondencePageProps> = ({ currentUser, cl
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <p className="font-bold text-slate-800">{clientMap.get(log.clientId) || '不明な顧客'}</p>
-                                    {log.jobId && <p className="text-sm text-cyan-600">{jobMap.get(log.jobId) || '不明な案件'}</p>}
+                                    {log.jobId && (
+                                        onLinkToJob ? (
+                                            <button
+                                                onClick={() => {
+                                                    const job = jobs.find(j => j.id === log.jobId);
+                                                    if (job) onLinkToJob(job);
+                                                }}
+                                                className="text-sm text-cyan-600 hover:text-cyan-800 hover:underline text-left"
+                                            >
+                                                {jobMap.get(log.jobId) || '不明な案件'}
+                                            </button>
+                                        ) : (
+                                            <p className="text-sm text-cyan-600">{jobMap.get(log.jobId) || '不明な案件'}</p>
+                                        )
+                                    )}
                                 </div>
                                 <div className="flex flex-col items-end text-xs text-slate-500 pr-8">
                                     <span>{new Date(log.correspondenceDate).toLocaleString('ja-JP')}</span>
                                     <span>担当: {userMap.get(log.staffId) || '不明'}</span>
                                 </div>
                             </div>
-                             <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-2">
                                 <span className="text-sm text-slate-600">温度感:</span>
                                 <StarRatingDisplay rating={log.temperature} />
-                             </div>
+                            </div>
                             <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-md whitespace-pre-wrap">{log.memo}</p>
                         </div>
                     ))}
