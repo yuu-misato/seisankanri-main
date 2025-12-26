@@ -97,22 +97,6 @@ const App: React.FC = () => {
     const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
 
-    const [isNewJob, setIsNewJob] = useState(false);
-    // ... (existing code)
-
-    const handleSelectJob = (job: Job) => {
-        setSelectedJob(job);
-        setIsNewJob(false);
-        setIsDetailModalOpen(true);
-    };
-
-    const handleToggleSelectJob = (jobId: string) => {
-        setSelectedJobIds(prev => prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]);
-    };
-
-    const handleSelectAllJobs = (ids: string[]) => {
-        setSelectedJobIds(ids);
-    };
 
     const handleBulkDelete = async () => {
         if (!window.confirm(`${selectedJobIds.length}件の案件を削除しますか？この操作は取り消せません。`)) return;
