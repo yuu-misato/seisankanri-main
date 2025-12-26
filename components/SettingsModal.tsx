@@ -146,211 +146,213 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     // ... (rest of functions) ...
 
+    const renderTabContent = () => {
+        switch (activeTab) {
             case 'users':
-return (
-    <div>
-        <table className="w-full text-sm">
-            <thead>
-                <tr className="text-left bg-slate-100">
-                    {userFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}
-                    <th className="p-2 font-semibold">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                {localUsers.map(item => editingId === item.id ?
-                    <tr key={item.id} className="bg-slate-50">
-                        <EditableRow item={{ ...item, password: '' }} onSave={(updated) => handleUpdateItem(setLocalUsers, updated)} onCancel={() => setEditingId(null)} fields={userFields} isNew={!item.id.includes('-') && !item.id.startsWith('user-')} />
-                    </tr>
-                    :
-                    <tr key={item.id} className="border-b hover:bg-slate-50">
-                        {userFields.map(f => (
-                            <td key={f.key} className="p-2">
-                                {f.type === 'password' ? '••••••••' : item[f.key as keyof typeof item]}
-                            </td>
-                        ))}
-                        <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalUsers, item.id)}><TrashIcon /></button></td>
-                    </tr>
-                )}
-            </tbody>
-        </table>
-        <button onClick={() => handleAddItem(setLocalUsers, { id: generateId(), name: '', username: '', password: '', role: 'user' })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />ユーザーを追加</button>
-    </div>
-);
+                return (
+                    <div>
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-left bg-slate-100">
+                                    {userFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}
+                                    <th className="p-2 font-semibold">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {localUsers.map(item => editingId === item.id ?
+                                    <tr key={item.id} className="bg-slate-50">
+                                        <EditableRow item={{ ...item, password: '' }} onSave={(updated) => handleUpdateItem(setLocalUsers, updated)} onCancel={() => setEditingId(null)} fields={userFields} isNew={!item.id.includes('-') && !item.id.startsWith('user-')} />
+                                    </tr>
+                                    :
+                                    <tr key={item.id} className="border-b hover:bg-slate-50">
+                                        {userFields.map(f => (
+                                            <td key={f.key} className="p-2">
+                                                {f.type === 'password' ? '••••••••' : item[f.key as keyof typeof item]}
+                                            </td>
+                                        ))}
+                                        <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalUsers, item.id)}><TrashIcon /></button></td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                        <button onClick={() => handleAddItem(setLocalUsers, { id: generateId(), name: '', username: '', password: '', role: 'user' })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />ユーザーを追加</button>
+                    </div>
+                );
             case 'plating':
-return (
-    <div>
-        <table className="w-full text-sm">
-            <thead><tr className="text-left bg-slate-100">{platingFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
-            <tbody>
-                {localPlatingTypes.map(item => editingId === item.id ?
-                    <tr key={item.id} className="bg-slate-50">
-                        <EditableRow item={item} onSave={(updated) => handleUpdateItem(setLocalPlatingTypes, updated)} onCancel={() => setEditingId(null)} fields={platingFields} isNew={!item.id.includes('-') && !item.id.startsWith('plating-')} />
-                    </tr>
-                    :
-                    <tr key={item.id} className="border-b hover:bg-slate-50">
-                        {platingFields.map(f => <td key={f.key} className="p-2">{item[f.key as keyof typeof item]}</td>)}
-                        <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalPlatingTypes, item.id)}><TrashIcon /></button></td>
-                    </tr>
-                )}
-            </tbody>
-        </table>
-        <button onClick={() => handleAddItem(setLocalPlatingTypes, { id: generateId(), name: '', unitPrice: 0, costPerLot: 0 })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />めっき種を追加</button>
-    </div>
-);
+                return (
+                    <div>
+                        <table className="w-full text-sm">
+                            <thead><tr className="text-left bg-slate-100">{platingFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
+                            <tbody>
+                                {localPlatingTypes.map(item => editingId === item.id ?
+                                    <tr key={item.id} className="bg-slate-50">
+                                        <EditableRow item={item} onSave={(updated) => handleUpdateItem(setLocalPlatingTypes, updated)} onCancel={() => setEditingId(null)} fields={platingFields} isNew={!item.id.includes('-') && !item.id.startsWith('plating-')} />
+                                    </tr>
+                                    :
+                                    <tr key={item.id} className="border-b hover:bg-slate-50">
+                                        {platingFields.map(f => <td key={f.key} className="p-2">{item[f.key as keyof typeof item]}</td>)}
+                                        <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalPlatingTypes, item.id)}><TrashIcon /></button></td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                        <button onClick={() => handleAddItem(setLocalPlatingTypes, { id: generateId(), name: '', unitPrice: 0, costPerLot: 0 })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />めっき種を追加</button>
+                    </div>
+                );
             case 'jigs':
-return (
-    <div>
-        <table className="w-full text-sm">
-            <thead><tr className="text-left bg-slate-100">{jigFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
-            <tbody>
-                {localJigs.map(item => editingId === item.id ?
-                    <tr key={item.id} className="bg-slate-50">
-                        <EditableRow item={item} onSave={(updated) => handleUpdateItem(setLocalJigs, updated)} onCancel={() => setEditingId(null)} fields={jigFields} isNew={!item.id.includes('-') && !item.id.startsWith('jig-')} />
-                    </tr>
-                    :
-                    <tr key={item.id} className="border-b hover:bg-slate-50">
-                        {jigFields.map(f => <td key={f.key} className="p-2">{item[f.key as keyof typeof item]}</td>)}
-                        <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalJigs, item.id)}><TrashIcon /></button></td>
-                    </tr>
-                )}
-            </tbody>
-        </table>
-        <button onClick={() => handleAddItem(setLocalJigs, { id: generateId(), name: '', totalQuantity: 0 })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />治具を追加</button>
-    </div>
-);
+                return (
+                    <div>
+                        <table className="w-full text-sm">
+                            <thead><tr className="text-left bg-slate-100">{jigFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
+                            <tbody>
+                                {localJigs.map(item => editingId === item.id ?
+                                    <tr key={item.id} className="bg-slate-50">
+                                        <EditableRow item={item} onSave={(updated) => handleUpdateItem(setLocalJigs, updated)} onCancel={() => setEditingId(null)} fields={jigFields} isNew={!item.id.includes('-') && !item.id.startsWith('jig-')} />
+                                    </tr>
+                                    :
+                                    <tr key={item.id} className="border-b hover:bg-slate-50">
+                                        {jigFields.map(f => <td key={f.key} className="p-2">{item[f.key as keyof typeof item]}</td>)}
+                                        <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalJigs, item.id)}><TrashIcon /></button></td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                        <button onClick={() => handleAddItem(setLocalJigs, { id: generateId(), name: '', totalQuantity: 0 })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />治具を追加</button>
+                    </div>
+                );
             case 'clients':
-return (
-    <div>
-        <table className="w-full text-sm">
-            <thead><tr className="text-left bg-slate-100">{clientFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
-            <tbody>
-                {localClients.map(item => editingId === item.id ?
-                    <tr key={item.id} className="bg-slate-50">
-                        <EditableRow item={item} onSave={(updated) => handleUpdateItem(setLocalClients, updated)} onCancel={() => setEditingId(null)} fields={clientFields} isNew={!item.id.includes('-') && !item.id.startsWith('client-')} />
-                    </tr>
-                    :
-                    <tr key={item.id} className="border-b hover:bg-slate-50">
-                        {clientFields.map(f => <td key={f.key} className="p-2">{item[f.key as keyof typeof item] || '-'}</td>)}
-                        <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalClients, item.id)}><TrashIcon /></button></td>
-                    </tr>
-                )}
-            </tbody>
-        </table>
-        <button onClick={() => handleAddItem(setLocalClients, { id: generateId(), name: '', contactPerson: '' })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />顧客を追加</button>
-    </div>
-);
+                return (
+                    <div>
+                        <table className="w-full text-sm">
+                            <thead><tr className="text-left bg-slate-100">{clientFields.map(f => <th key={f.key} className="p-2 font-semibold">{f.label}</th>)}<th className="p-2 font-semibold">操作</th></tr></thead>
+                            <tbody>
+                                {localClients.map(item => editingId === item.id ?
+                                    <tr key={item.id} className="bg-slate-50">
+                                        <EditableRow item={item} onSave={(updated) => handleUpdateItem(setLocalClients, updated)} onCancel={() => setEditingId(null)} fields={clientFields} isNew={!item.id.includes('-') && !item.id.startsWith('client-')} />
+                                    </tr>
+                                    :
+                                    <tr key={item.id} className="border-b hover:bg-slate-50">
+                                        {clientFields.map(f => <td key={f.key} className="p-2">{item[f.key as keyof typeof item] || '-'}</td>)}
+                                        <td className="p-2 flex gap-2"><button onClick={() => setEditingId(item.id)}><PencilIcon /></button><button onClick={() => handleDeleteItem(setLocalClients, item.id)}><TrashIcon /></button></td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                        <button onClick={() => handleAddItem(setLocalClients, { id: generateId(), name: '', contactPerson: '' })} className="mt-4 flex items-center gap-2 text-sm text-cyan-600 hover:text-cyan-800"><PlusIcon />顧客を追加</button>
+                    </div>
+                );
             case 'process':
-return (
-    <div className="space-y-4">
-        <h4 className="font-semibold text-slate-800">各工程の標準所要日数</h4>
-        {Object.keys(localProcessDurations).map(key => (
-            <div key={key} className="grid grid-cols-2 items-center">
-                <label className="text-sm text-slate-700">{key}</label>
-                <div className="flex items-center gap-2">
-                    <input
-                        type="number"
-                        min="0"
-                        value={localProcessDurations[key as keyof ProcessStageDurations]}
-                        onChange={(e) => setLocalProcessDurations(prev => ({ ...prev, [key]: Number(e.target.value) }))}
-                        className="w-24 border border-slate-300 rounded-md shadow-sm p-2 focus:ring-cyan-500 focus:border-cyan-500"
-                    />
-                    <span className="text-sm text-slate-600">日</span>
-                </div>
-            </div>
-        ))}
-    </div>
-);
+                return (
+                    <div className="space-y-4">
+                        <h4 className="font-semibold text-slate-800">各工程の標準所要日数</h4>
+                        {Object.keys(localProcessDurations).map(key => (
+                            <div key={key} className="grid grid-cols-2 items-center">
+                                <label className="text-sm text-slate-700">{key}</label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={localProcessDurations[key as keyof ProcessStageDurations]}
+                                        onChange={(e) => setLocalProcessDurations(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                                        className="w-24 border border-slate-300 rounded-md shadow-sm p-2 focus:ring-cyan-500 focus:border-cyan-500"
+                                    />
+                                    <span className="text-sm text-slate-600">日</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                );
             case 'report':
-return (
-    <div className="space-y-4">
-        <h4 className="font-semibold text-slate-800">レポート設定</h4>
-        <div className="grid grid-cols-2 items-center">
-            <label htmlFor="settlement-month" className="text-sm text-slate-700">決算月</label>
-            <select
-                id="settlement-month"
-                value={localSettlementMonth}
-                onChange={e => setLocalSettlementMonth(Number(e.target.value))}
-                className="w-32 p-2 border border-slate-300 rounded-md bg-white focus:ring-cyan-500 focus:border-cyan-500">
-                {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}月</option>)}
-            </select>
-        </div>
-    </div>
-);
+                return (
+                    <div className="space-y-4">
+                        <h4 className="font-semibold text-slate-800">レポート設定</h4>
+                        <div className="grid grid-cols-2 items-center">
+                            <label htmlFor="settlement-month" className="text-sm text-slate-700">決算月</label>
+                            <select
+                                id="settlement-month"
+                                value={localSettlementMonth}
+                                onChange={e => setLocalSettlementMonth(Number(e.target.value))}
+                                className="w-32 p-2 border border-slate-300 rounded-md bg-white focus:ring-cyan-500 focus:border-cyan-500">
+                                {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}月</option>)}
+                            </select>
+                        </div>
+                    </div>
+                );
 
             case 'data':
-return (
-    <div className="space-y-6">
-        <div>
-            <h4 className="font-semibold text-slate-800 mb-2">データの保存 (エクスポート)</h4>
-            <p className="text-sm text-slate-600 mb-4">
-                現在のシステム内の全データ（ユーザー、マスター、案件、履歴など）をJSONファイルとしてダウンロードします。
-                別のブラウザやPCにデータを移行する際に使用してください。
-            </p>
-            <button onClick={handleExportData} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700">
-                <DownloadIcon />
-                データをダウンロード
-            </button>
-        </div>
-        <div className="border-t border-slate-200 pt-6">
-            <h4 className="font-semibold text-slate-800 mb-2">データの復元 (インポート)</h4>
-            <p className="text-sm text-slate-600 mb-4">
-                ダウンロードしたJSONファイルを読み込み、データを復元します。
-                <br />
-                <span className="text-red-600 font-bold">注意: 現在のデータはすべて上書きされます。</span>
-            </p>
-            <input
-                type="file"
-                accept=".json"
-                ref={fileInputRef}
-                onChange={handleImportData}
-                className="hidden"
-            />
-            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700">
-                <UploadIcon />
-                ファイルを選択して復元
-            </button>
-        </div>
-    </div>
-)
+                return (
+                    <div className="space-y-6">
+                        <div>
+                            <h4 className="font-semibold text-slate-800 mb-2">データの保存 (エクスポート)</h4>
+                            <p className="text-sm text-slate-600 mb-4">
+                                現在のシステム内の全データ（ユーザー、マスター、案件、履歴など）をJSONファイルとしてダウンロードします。
+                                別のブラウザやPCにデータを移行する際に使用してください。
+                            </p>
+                            <button onClick={handleExportData} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700">
+                                <DownloadIcon />
+                                データをダウンロード
+                            </button>
+                        </div>
+                        <div className="border-t border-slate-200 pt-6">
+                            <h4 className="font-semibold text-slate-800 mb-2">データの復元 (インポート)</h4>
+                            <p className="text-sm text-slate-600 mb-4">
+                                ダウンロードしたJSONファイルを読み込み、データを復元します。
+                                <br />
+                                <span className="text-red-600 font-bold">注意: 現在のデータはすべて上書きされます。</span>
+                            </p>
+                            <input
+                                type="file"
+                                accept=".json"
+                                ref={fileInputRef}
+                                onChange={handleImportData}
+                                className="hidden"
+                            />
+                            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700">
+                                <UploadIcon />
+                                ファイルを選択して復元
+                            </button>
+                        </div>
+                    </div>
+                )
             default: return null;
         }
     }
 
-return (
-    <div className="fixed inset-0 bg-black/50 z-40 flex justify-center items-center p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <header className="flex justify-between items-center p-4 border-b border-slate-200">
-                <div className="flex items-center gap-2">
-                    <CogIcon />
-                    <h2 className="text-lg font-semibold text-slate-800">設定</h2>
-                </div>
-                <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100"><CloseIcon /></button>
-            </header>
-
-            <div className="flex-grow flex overflow-hidden">
-                <nav className="border-r border-slate-200 p-4 w-48 flex-shrink-0 overflow-y-auto">
-                    <div className="flex flex-col gap-1">
-                        {currentUser.role === 'admin' && <TabButton tab="users" label="ユーザー管理" />}
-                        <TabButton tab="plating" label="めっき種マスター" />
-                        <TabButton tab="jigs" label="治具マスター" />
-                        <TabButton tab="clients" label="顧客マスター" />
-                        <TabButton tab="process" label="工程設定" />
-                        <TabButton tab="report" label="レポート設定" />
-                        <div className="border-t border-slate-200 my-2 pt-2">
-                            <TabButton tab="data" label="データ管理" />
-                        </div>
+    return (
+        <div className="fixed inset-0 bg-black/50 z-40 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                <header className="flex justify-between items-center p-4 border-b border-slate-200">
+                    <div className="flex items-center gap-2">
+                        <CogIcon />
+                        <h2 className="text-lg font-semibold text-slate-800">設定</h2>
                     </div>
-                </nav>
-                <main className="flex-grow p-6 overflow-y-auto">
-                    {renderTabContent()}
-                </main>
-            </div>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100"><CloseIcon /></button>
+                </header>
 
-            <footer className="flex justify-end gap-2 p-4 border-t border-slate-200 bg-slate-50 rounded-b-lg">
-                <button onClick={onClose} className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-md hover:bg-slate-50">キャンセル</button>
-                <button onClick={handleSave} className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700">保存して閉じる</button>
-            </footer>
+                <div className="flex-grow flex overflow-hidden">
+                    <nav className="border-r border-slate-200 p-4 w-48 flex-shrink-0 overflow-y-auto">
+                        <div className="flex flex-col gap-1">
+                            {currentUser.role === 'admin' && <TabButton tab="users" label="ユーザー管理" />}
+                            <TabButton tab="plating" label="めっき種マスター" />
+                            <TabButton tab="jigs" label="治具マスター" />
+                            <TabButton tab="clients" label="顧客マスター" />
+                            <TabButton tab="process" label="工程設定" />
+                            <TabButton tab="report" label="レポート設定" />
+                            <div className="border-t border-slate-200 my-2 pt-2">
+                                <TabButton tab="data" label="データ管理" />
+                            </div>
+                        </div>
+                    </nav>
+                    <main className="flex-grow p-6 overflow-y-auto">
+                        {renderTabContent()}
+                    </main>
+                </div>
+
+                <footer className="flex justify-end gap-2 p-4 border-t border-slate-200 bg-slate-50 rounded-b-lg">
+                    <button onClick={onClose} className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-md hover:bg-slate-50">キャンセル</button>
+                    <button onClick={handleSave} className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700">保存して閉じる</button>
+                </footer>
+            </div>
         </div>
-    </div>
-);
+    );
 };
