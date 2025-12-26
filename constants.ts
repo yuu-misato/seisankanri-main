@@ -2,22 +2,32 @@ import { ProcessStatus, Job, PlatingTypeMaster, JigMaster, ClientMaster, Process
 
 // The order of statuses for display and processing logic
 export const PROCESS_STATUS_ORDER: ProcessStatus[] = [
-  ProcessStatus.RECEIVED,
-  ProcessStatus.PRE_TREATMENT,
-  ProcessStatus.PLATING,
-  ProcessStatus.POST_TREATMENT,
-  ProcessStatus.INSPECTION,
-  ProcessStatus.SHIPPED,
+    ProcessStatus.RECEIVED,
+    ProcessStatus.PRE_TREATMENT,
+    ProcessStatus.PLATING,
+    ProcessStatus.POST_TREATMENT,
+    ProcessStatus.INSPECTION,
+    ProcessStatus.SHIPPED,
 ];
 
 // Color mapping for statuses
 export const STATUS_COLORS: Record<ProcessStatus, string> = {
-  [ProcessStatus.RECEIVED]: 'bg-slate-500',
-  [ProcessStatus.PRE_TREATMENT]: 'bg-blue-500',
-  [ProcessStatus.PLATING]: 'bg-yellow-500',
-  [ProcessStatus.POST_TREATMENT]: 'bg-orange-500',
-  [ProcessStatus.INSPECTION]: 'bg-purple-500',
-  [ProcessStatus.SHIPPED]: 'bg-green-500',
+    [ProcessStatus.RECEIVED]: 'bg-slate-500',
+    [ProcessStatus.PRE_TREATMENT]: 'bg-blue-500',
+    [ProcessStatus.PLATING]: 'bg-yellow-500',
+    [ProcessStatus.POST_TREATMENT]: 'bg-orange-500',
+    [ProcessStatus.INSPECTION]: 'bg-purple-500',
+    [ProcessStatus.SHIPPED]: 'bg-green-500',
+};
+
+// Labels for statuses
+export const STATUS_LABELS: Record<ProcessStatus, string> = {
+    [ProcessStatus.RECEIVED]: '受入',
+    [ProcessStatus.PRE_TREATMENT]: '前処理',
+    [ProcessStatus.PLATING]: 'めっき中',
+    [ProcessStatus.POST_TREATMENT]: '後処理',
+    [ProcessStatus.INSPECTION]: '検査中',
+    [ProcessStatus.SHIPPED]: '出荷済',
 };
 
 // --- Mock Data ---
@@ -34,21 +44,21 @@ export const MOCK_USERS = [
 
 
 export const MOCK_CLIENTS: ClientMaster[] = [
-  { id: 'client-1', name: '株式会社テクノ', contactPerson: '田中 太郎' },
-  { id: 'client-2', name: '精密工業合同会社', contactPerson: '鈴木 一郎' },
-  { id: 'client-3', name: '山田製作所', contactPerson: '山田 花子' },
+    { id: 'client-1', name: '株式会社テクノ', contactPerson: '田中 太郎' },
+    { id: 'client-2', name: '精密工業合同会社', contactPerson: '鈴木 一郎' },
+    { id: 'client-3', name: '山田製作所', contactPerson: '山田 花子' },
 ];
 
 export const MOCK_PLATING_TYPES: PlatingTypeMaster[] = [
-  { id: 'plating-1', name: '亜鉛めっき', unitPrice: 100, costPerLot: 5000 },
-  { id: 'plating-2', name: 'ニッケルクロムめっき', unitPrice: 350, costPerLot: 12000 },
-  { id: 'plating-3', name: '無電解ニッケルめっき', unitPrice: 500, costPerLot: 18000 },
+    { id: 'plating-1', name: '亜鉛めっき', unitPrice: 100, costPerLot: 5000 },
+    { id: 'plating-2', name: 'ニッケルクロムめっき', unitPrice: 350, costPerLot: 12000 },
+    { id: 'plating-3', name: '無電解ニッケルめっき', unitPrice: 500, costPerLot: 18000 },
 ];
 
 export const MOCK_JIGS: JigMaster[] = [
-  { id: 'jig-1', name: '治具A-1', totalQuantity: 50 },
-  { id: 'jig-2', name: '治具B-5', totalQuantity: 20 },
-  { id: 'jig-3', name: '特殊治具C', totalQuantity: 5 },
+    { id: 'jig-1', name: '治具A-1', totalQuantity: 50 },
+    { id: 'jig-2', name: '治具B-5', totalQuantity: 20 },
+    { id: 'jig-3', name: '特殊治具C', totalQuantity: 5 },
 ];
 
 const today = new Date();

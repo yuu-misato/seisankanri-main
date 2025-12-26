@@ -8,10 +8,13 @@ interface JobListProps {
   platingTypes: PlatingTypeMaster[];
   clients: ClientMaster[];
   onSelectJob: (job: Job) => void;
-  users?: User[]; // Optional for backward compatibility, but recommended
+  users?: User[];
+  selectedJobIds: string[];
+  onToggleSelect: (jobId: string) => void;
+  onSelectAll: (ids: string[]) => void;
 }
 
-export const JobList: React.FC<JobListProps> = ({ jobs, platingTypes, clients, onSelectJob, users = [] }) => {
+export const JobList: React.FC<JobListProps> = ({ jobs, platingTypes, clients, onSelectJob, users = [], selectedJobIds, onToggleSelect, onSelectAll }) => {
   const platingTypeMap = useMemo(() => new Map(platingTypes.map(pt => [pt.id, pt.name])), [platingTypes]);
   const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.name])), [clients]);
 
@@ -26,6 +29,9 @@ export const JobList: React.FC<JobListProps> = ({ jobs, platingTypes, clients, o
   const handlePrint = () => {
     window.print();
   };
+
+  const isAllSelected = jobs.length > 0 && jobs.every(job => selectedJobIds.includes(job.id));
+  const isPartiallySelected = jobs.some(job => selectedJobIds.includes(job.id)) && !isAllSelected;
 
   return (
     <div className="bg-white shadow-sm border border-slate-200 rounded-lg overflow-hidden">
@@ -43,6 +49,15 @@ export const JobList: React.FC<JobListProps> = ({ jobs, platingTypes, clients, o
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
+              <th scope="col" className="px-6 py-3 text-left w-4">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  ref={input => { if (input) input.indeterminate = isPartiallySelected; }}
+                  onChange={() => onSelectAll(isAllSelected ? [] : jobs.map(j => j.id))}
+                  className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
+                />
+              </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">ステータス</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">納期</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">顧客名</th>
@@ -57,8 +72,16 @@ export const JobList: React.FC<JobListProps> = ({ jobs, platingTypes, clients, o
               <tr
                 key={job.id}
                 onClick={() => onSelectJob(job)}
-                className="hover:bg-slate-50 cursor-pointer transition-colors"
+                className={`hover:bg-slate-50 cursor-pointer transition-colors ${selectedJobIds.includes(job.id) ? 'bg-cyan-50' : ''}`}
               >
+                <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={selectedJobIds.includes(job.id)}
+                    onChange={() => onToggleSelect(job.id)}
+                    className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
+                  />
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <StatusBadge status={job.status} />
                 </td>
