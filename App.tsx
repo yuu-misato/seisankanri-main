@@ -435,23 +435,29 @@ const App: React.FC = () => {
     // We need to wrap the setters passed to SettingsModal to handle Cloud Mode
     const wrapSetter = <T extends { id: string }>(collectionName: string, localSetter: React.Dispatch<React.SetStateAction<T[]>>) => {
         return (newData: T[]) => {
-            localSetter(newData); // Always update local state for immediate UI feedback (optimistic)
-            if (isCloudMode && supabase) {
-                // Determine deletions
-                // Fetch current collection to find diff? No, too expensive.
-                // Simple approach: Upsert all. (Deleted items will remain in cloud - limitation of this simple sync)
-                // Better approach for this app size: The UI state `newData` IS the source of truth.
-                // We should technically delete items not in `newData`.
-                // For now, let's just upsert for safety.
-                const promises = newData.map(item => supabase.from(collectionName).upsert(item));
-                Promise.all(promises).then((results) => {
-                    const errors = results.filter(r => r.error);
-                    if (errors.length > 0) {
-                        console.error(`Error syncing ${collectionName}:`, errors);
-                        alert(`データの保存中にエラーが発生しました (${collectionName})。詳細はコンソールを確認してください。`);
-                    }
-                });
-            }
+            // Calculate diff for deletion BEFORE updating state
+            localSetter((prevData) => {
+                const prevIds = new Set(prevData.map(d => d.id));
+                const newIds = new Set(newData.map(d => d.id));
+                const deletedIds = [...prevIds].filter(id => !newIds.has(id));
+
+                if (isCloudMode && supabase) {
+                    // Upsert new/updated items
+                    const upsertPromises = newData.map(item => supabase.from(collectionName).upsert(item));
+
+                    // Delete removed items
+                    const deletePromises = deletedIds.map(id => supabase.from(collectionName).delete().eq('id', id));
+
+                    Promise.all([...upsertPromises, ...deletePromises]).then((results) => {
+                        const errors = results.filter(r => r.error);
+                        if (errors.length > 0) {
+                            console.error(`Error syncing ${collectionName}:`, errors);
+                            alert(`データの保存中にエラーが発生しました (${collectionName})。詳細はコンソールを確認してください。`);
+                        }
+                    });
+                }
+                return newData;
+            });
         }
     }
 
