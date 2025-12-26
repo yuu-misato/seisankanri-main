@@ -566,6 +566,11 @@ const App: React.FC = () => {
                         {viewMode === 'list' && (
                             <JobList
                                 jobs={paginatedJobs}
+                                platingTypes={platingTypes}
+                                clients={clients}
+                                onSelectJob={handleSelectJob}
+                                users={users}
+                                selectedJobIds={selectedJobIds}
                                 onToggleSelect={handleToggleSelectJob}
                                 onSelectAll={handleSelectAllJobs}
                             />
